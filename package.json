@@ -10,8 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "mysql2": "^2.3.3",
     "node-fetch": "^2.6.7",
-    "puppeteer": "^13.4.1"
+    "puppeteer": "^13.4.1",
+    "sequelize": "^6.17.0",
+    "sequelize-noupdate-attributes": "^1.0.0"
   }
 }
