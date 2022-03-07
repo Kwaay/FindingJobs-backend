@@ -19,9 +19,11 @@ sequelizeNoUpdateAttributes(sequelize);
 
 // Récuperation des models
 const wttj = require("./welcometothejungle")(sequelize, Sequelize.DataTypes);
+const stack = require("./stack")(sequelize, Sequelize.DataTypes);
 
 
 sequelize.Wttj = wttj;
+sequelize.Stack = stack;
 
 // Tentative d'authentification à la base de données
 sequelize

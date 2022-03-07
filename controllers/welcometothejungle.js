@@ -1,9 +1,29 @@
-const { Wttj } = require('../models');
+const { Wttj } = require("../models");
 const puppeteer = require("puppeteer");
+const striptags = require("striptags");
 
-exports.GetAllLinks = async (req, res) => {
+async function autoScroll(page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve, reject) => {
+      var totalHeight = 0;
+      var distance = 100;
+      var timer = setInterval(() => {
+        var scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+
+        if (totalHeight >= scrollHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  });
+}
+const waitList = [];
+
+exports.getAllLinks = async (req, res) => {
   const baseURL = "https://www.welcometothejungle.com/fr/jobs";
-  const waitList = [];
   let pageCount = 0;
 
   (async () => {
@@ -19,9 +39,10 @@ exports.GetAllLinks = async (req, res) => {
     );
     console.log("🎉 - No more pages");
     setTimeout(() => {
-      console.log(`✅ - Launching Parse Welcome to the Jungle Results with ${waitList.length} results`);
+      console.log(
+        `✅ - Launching Parse Welcome to the Jungle Results with ${waitList.length} results`
+      );
     }, 5000);
-    
 
     await browser.close();
     const endTime = Date.now();
@@ -34,7 +55,9 @@ exports.GetAllLinks = async (req, res) => {
         : minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
     }
     console.log(waitList.length);
-    return res.status(200).json({ message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`})
+    return res.status(200).json({
+      message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
+    });
   })();
 
   function parseWTTJResults(browser, URL) {
@@ -50,7 +73,6 @@ exports.GetAllLinks = async (req, res) => {
       await autoScroll(page);
       console.log("✅ - Page scroll complete");
       const links = await page.evaluate(() => {
-        window.scrollTo(0, document.body.scrollHeight);
         let elements = Array.from(
           document.querySelectorAll("main li article div a[cover]")
         );
@@ -59,11 +81,11 @@ exports.GetAllLinks = async (req, res) => {
         });
         return linksElement;
       });
-      links.forEach( async (link) => {
+      links.forEach(async (link) => {
         await Wttj.create({
-          link,
+          url: link,
         });
-        waitList.push(link)
+        waitList.push(link);
       });
       const hasNextPage = await page.evaluate(async () => {
         const nextBtn = document.querySelector('a[aria-label="Next page"] ');
@@ -76,23 +98,40 @@ exports.GetAllLinks = async (req, res) => {
       resolve();
     });
   }
-
-  async function autoScroll(page) {
-    await page.evaluate(async () => {
-      await new Promise((resolve, reject) => {
-        var totalHeight = 0;
-        var distance = 100;
-        var timer = setInterval(() => {
-          var scrollHeight = document.body.scrollHeight;
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-
-          if (totalHeight >= scrollHeight) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 100);
+};
+exports.findAllStacks = async (req, res) => {
+  const findAllLinks = await Wttj.findAll({
+    limit: 2,
+  });
+  const browser = await puppeteer.launch({
+    headless: false,
+    args: ["--no-sandbox"],
+  });
+  const promises = [];
+  findAllLinks.forEach((link) => {
+    console.log(link);
+    promises.push(getTheStack(browser, link.url));
+  });
+  await Promise.all(promises);
+  await browser.close();
+  async function getTheStack(browser, URL) {
+    return new Promise(async (resolve) => {
+      const page = await browser.newPage();
+      console.log("⏱️ - Fetching page data");
+      await page.goto(URL);
+      const content = await page.evaluate(async () => {
+        const paragraph = document.querySelector(
+          'main div section[data-testid="job-section-description"] '
+        );
+        return paragraph.innerHTML;
       });
+      const sContent = striptags(content).toLowerCase();
+      console.log(sContent);
+      const regexPython = /(python)/gmi;
+      const searchPython = regexPython.test(sContent);
+      console.log(searchPython);
+      console.log("✅ - Page data fetched");
+      resolve();
     });
   }
-}
+};

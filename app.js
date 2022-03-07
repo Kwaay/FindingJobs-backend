@@ -2,6 +2,8 @@ const express = require("express");
 
 // Récupération des routes
 const wttjRoutes = require("./routes/welcometothejungle");
+const stackRoutes = require("./routes/stack");
+
 
 const app = express();
 
@@ -26,5 +28,6 @@ app.use(express.json({ limit: "50mb" }));
 
 // Base URL pour les routes
 app.use("/api/wttj", wttjRoutes);
+app.use("/api/stack", stackRoutes);
 
 module.exports = app;

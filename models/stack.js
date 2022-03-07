@@ -1,6 +1,6 @@
 module.exports = (Sequelize, DataTypes) =>
   Sequelize.define(
-    "Wttj",
+    "Stack",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -11,25 +11,20 @@ module.exports = (Sequelize, DataTypes) =>
           readOnly: true,
         },
       },
-      url: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      createdAt: {
-        type: DataTypes.DATE,
+      type: {
+        type: DataTypes.STRING,
         allowNull: false,
-        noUpdate: {
-          readOnly: true,
-        },
       },
-      updatedAt: {
-        type: DataTypes.DATE,
+      regex: {
+        type: DataTypes.STRING,
         allowNull: false,
-        noUpdate: true,
-      },
+      }
     },
     {
-      tableName: "wttj",
-      timestamps: true,
+      tableName: "stack",
     }
   );
