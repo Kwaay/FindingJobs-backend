@@ -1,6 +1,6 @@
 const { Stack } = require("../models");
 
-const regexName = /^[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇßØÅÆa-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ]{2,25}$/;
+const regexName = /^[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇßØÅÆa-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ/.# ]{1,25}$/;
   // /(Vue|vue|.JS|Js|js)/gm
 
 exports.getAllStacks = async (req, res) => {

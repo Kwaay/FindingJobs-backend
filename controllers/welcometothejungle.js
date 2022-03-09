@@ -1,6 +1,18 @@
-const { Wttj } = require("../models");
+const { Wttj, Stack } = require("../models");
 const puppeteer = require("puppeteer");
 const striptags = require("striptags");
+
+const regexType =
+  /(?<type>CDI|CDD|Freelance|(?:Stage[ .-]?\(?[0-9]?[ .-]?[a-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ]+(?:[ .-]?[0-9]?[ .-]?[a-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ]+)?\)?))/gmi
+const regexStart =
+  /(Début[ .-]?[:]?\s{2,}?[0-9]?[0-9]?[ .-]?[JFMASOND]?[aévuoce]?[vriûptcn]?[vrsinltoet]?[ilmbe]?[emrb]?[rtbe]?[er]?[e]?[[ .-]?[0-9]?[0-9]?[0-9]?[0-9]?)[ .-]?()/gim;
+const regexStudy = /(Bac[ .-][+][5][ .-]?[ .-\/][ .-]?Master)/gim;
+const regexExperience =
+  /([><][ .-]?[0-9][ .-]?an[s]?|[><][ .-]?[0-9][ .-]?mois)/gim;
+const regexRemote =
+  /(Télétravail[ .-]?ponctuel[ .-]?autorisé|Télétravail[ .-]?partiel[ .-]? possible|Télétravail[ .-]?total[ .-]?possible)/gim
+const regexSalary =
+  /(Salaire[ .-]?entre[ .-]?[0-9]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[e]?[t]?[ .-]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[/]?[ .-]?[m]?[o]?[i]?[s]?)/gim;
 
 async function autoScroll(page) {
   await page.evaluate(async () => {
@@ -19,6 +31,76 @@ async function autoScroll(page) {
       }, 100);
     });
   });
+}
+async function getHTML(browser, URL) {
+  return new Promise(async (resolve) => {
+    const page = await browser.newPage();
+    console.log("⏱️ - Fetching page data");
+    await page.goto(URL, { timeout: 0 });
+    const content = await page.evaluate(async () => {
+      const paragraph = document.querySelector(
+        'main div section[data-testid="job-section-description"] '
+      );
+      return paragraph.innerHTML;
+    });
+    const sContent = striptags(content).toLowerCase();
+    // console.log(sContent);
+    const region = await page.evaluate(() => {
+      const regionElement = document.querySelector(
+        "main div div div div ul.sc-1lvyirq-4.hengos"
+      );
+      
+      return regionElement.innerText.replace(/\s/g, " ");
+    });
+    const sRegion = striptags(region).toLowerCase();
+    const JobType = region.match(regexType); 
+    const start = region.match(regexStart);
+    const study = region.match(regexStudy);
+    const exp = region.match(regexExperience);
+    const remote = region.match(regexRemote);
+    const salary = region.match(regexSalary);
+    console.log(JobType, start, study, exp, remote, salary);
+    console.log(region)
+     // console.log("✅ - Page data fetched");
+    const presentStacks = findStacks(sContent);
+
+    resolve();
+  });
+}
+async function findStacks(HTML) {
+  const stacks = await Stack.findAll({});
+  presentStacks = []
+  stacks.forEach(async (stack) => {
+    const regex = new RegExp(stack.regex, "gmi");
+     // console.log(regex);
+    const search = regex.test(HTML);
+     // console.log(search);
+    if (search) { 
+      presentStacks.push(stack.id)
+    }
+  });
+  return presentStacks;
+}
+async function filterStack() { 
+
+}
+async function getStacks() {
+  const findAllLinks = await Wttj.findAll({
+    limit: 20,
+  });
+  if (findAllLinks.length < 1) return
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  const promises = [];
+  findAllLinks.forEach((link) => {
+    console.log(link);
+    promises.push(getHTML(browser, link.url));
+  });
+  await Promise.all(promises);
+  await browser.close();
+  // getStacks()
 }
 const waitList = [];
 
@@ -81,11 +163,13 @@ exports.getAllLinks = async (req, res) => {
         });
         return linksElement;
       });
+      waitList.length === 0;
       links.forEach(async (link) => {
         await Wttj.create({
           url: link,
         });
         waitList.push(link);
+        console.log(waitList.length);
       });
       const hasNextPage = await page.evaluate(async () => {
         const nextBtn = document.querySelector('a[aria-label="Next page"] ');
@@ -100,38 +184,112 @@ exports.getAllLinks = async (req, res) => {
   }
 };
 exports.findAllStacks = async (req, res) => {
-  const findAllLinks = await Wttj.findAll({
-    limit: 2,
-  });
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: ["--no-sandbox"],
-  });
-  const promises = [];
-  findAllLinks.forEach((link) => {
-    console.log(link);
-    promises.push(getTheStack(browser, link.url));
-  });
-  await Promise.all(promises);
-  await browser.close();
-  async function getTheStack(browser, URL) {
-    return new Promise(async (resolve) => {
-      const page = await browser.newPage();
-      console.log("⏱️ - Fetching page data");
-      await page.goto(URL);
-      const content = await page.evaluate(async () => {
-        const paragraph = document.querySelector(
-          'main div section[data-testid="job-section-description"] '
-        );
-        return paragraph.innerHTML;
-      });
-      const sContent = striptags(content).toLowerCase();
-      console.log(sContent);
-      const regexPython = /(python)/gmi;
-      const searchPython = regexPython.test(sContent);
-      console.log(searchPython);
-      console.log("✅ - Page data fetched");
-      resolve();
-    });
-  }
+  getStacks();
 };
+
+
+/*
+Kubernetes	Ops	/(kubernetes)/gmi
+Google Cloud	Host	/(Google[ -]?Cloud[ -]?Platform|Google[ -]?Cloud|GCP)/gmi
+Github Actions	Ops	/(GitHub[ -]?Actions)/gmi
+Python	Language	/(Python)/gmi
+Django	Framework	/(Django)/gmi
+FastAPI	Framework	/(FastAPI)/gmi
+AlpineJs	Framework	/(Alpine?JS|Alpine)/gmi
+TailwindCSS	Framework	/(Tailwind[ .-]?CSS|Tailwind)/gmi
+PostgreSQL	Database	/(Postgre[ .-]?SQL|Postgre)/gmi
+Redis	Ops	/(Redis)/gmi
+Airflow	Ops	/(Airflow)/gmi
+Pub/Sub	Skills	/(Pub[ .-\/]?Sub)/gmi
+BigQuery	Data	/(BigQuery)/gmi
+MySQL	Database	/(MySQL)/gmi
+JQuery	Library	/(JQuery)/gmi
+Vue	Framework	/(Vue[ .-]?JS|Vue)/gmi
+MariaDB	Database	/(Maria[ .-]?DB)/gmi
+Node.js	Framework	/(Node[ .-]?JS|Node)/gmi
+NestJS	Framework	/(Nest[ .-]?JS)/gmi
+JavaScript	Language	/(JavaScript)/gmi
+TypeScript 	Language	/(TypeScript)/gmi
+Java	Language	/(Java)/gmi
+Kafka	Ops	/(Kafka)/gmi
+SQL	Database	/\b(SQL)\b/gmi
+Hadoop	Framework	/(Hadoop)/gmi
+React	Framework	/(React[ .-]?JS|React)/gmi
+React Native 	Framework	/(React[ .-]?Native)/gmi
+Microsoft Project	Management	/(Microsoft[ .-]?Project)/gmi
+AWS	Host	/(AWS|Amazon[ .-]Web[ .-]Service[s]?)/gmi
+Azure	Host	/(Azure)/gmi
+API REST	Skills	/(API[ .-]REST|REST)/gmi
+POO	Skills	/(PDD|POO|Programmation[ .-]?orient[ée]?e[ .-]?objet|Object[ .-]?Oriented[ .-]?Programming)/gmi
+PHP	Language	/(PHP)/gmi
+Laravel	Framework	/(Laravel)/gmi
+Symfony	Framework	/(Symfony)/gmi
+TDD	Skills	/(TDD|Test[ .-]?Driven[ .-]?Development|d[ée]?veloppement[ .-]?pilot[ée]?[ .-]?par[ .-]?les[ .-]test[s]?)/gmi
+Expo	Framework	/(Expo)/gmi
+GO	Language	/(GO)/gmi
+Fastify	Framework	/(Fastify)/gmi
+Socket.io	Framework	/(Socket[ .-]?io)/gmi
+Firebase	Database	/(Firebase)/gmi
+MongoDB Mongodb	Database	/(Mongo[ .-]?DB|Mongo)/gmi
+Cloud Run	Ops	/(Cloud[ .-]?Run)/gmi
+S3	Host	/(S3)/gmi
+CloudFront	Host	/(Cloud[ .-]?Front)/gmi
+Docker	Ops	/(Docker)/gmi
+XCode	Tool	/(XCode)/gmi
+Angular	Framework	/(Angular)/gmi
+Enzyme	Framework	/(Enzyme)/gmi
+Jest	Framework	/(Jest)/gmi
+Webpack	Tool	/(Webpack)/gmi
+Babel	Tool	/(Babel)/gmi
+Swagger	Library	/(Swagger)/gmi
+Ruby on Rails Ruby / Rails	Language	/(Ruby[ -]?[\/]?[ -]?Rails|Ruby[ .-]?on[ .-]Rails|Ruby[ .-]and[ .-]Rails)/gmi
+Gulp	Tool	/(Gulp)/gmi
+Git	Skills	/(Git)/gmi
+CSS	Language	/\b(CSS)\b/gmi
+SCSS SaSS	Language	/(S[AC]?SS)/gmi
+Jira	Tool	/(Jira)/gmi
+Electron	Framework	/(Electron)/gmi
+Playwright	Framework	/(Playwright)/gmi
+Detox	Framework	/(Detox)/gmi
+cucumber	Framework	/(Cucumber)/gmi
+cypress Cypress	Framework	/(Cypress)/gmi
+Maven	Tool	/(Maven)/gmi
+jenkins	Ops	/(Jenkins)/gmi
+graphQL	Database	/(GraphQL)/gmi
+WordPress	CMS	/(WordPress)/gmi
+Prestashop	CMS	/(Prestashop)/gmi
+Shopify	CMS	/(Shopify)/gmi
+Prisma	Library	/(Prisma)/gmi
+Selenium	Tool	/(Selenium)/gmi
+C	Language	/\b(C)\b/gmi
+C++	Language	/(C[++]{2})/gmi
+C#	Language	/(C[#])/gmi
+DynamoDB	Database	/(Dynamo[ .-]?DB)/gmi
+Redshift 	Database	/(Redshift)/gmi
+HTML	Language	/(HTML)/gmi
+.Net	Language	/[.](net)/gmi
+Spring	Framework	/(Spring)/gmi
+MVC	Skills	/(MVC)/gmi
+Twig	Library	/(Twig)/gmi
+VanillaJS	Framework	/(Vanilla[ .-]?JS)/gmi
+Redux	Library	/(Redux)/gmi
+Liquid	Library	/(Liquid)/gmi
+Exasol	Database	/(Exasol)/gmi
+KendoUI	Library	/(KendoUI)/gmi
+Gradle	Tool	/(Gradle)/gmi
+ESLint	Tool	/(ES[ .-]?Lint)/gmi
+Prettier	Tool	/(Prettier)/gmi
+Svelte	Framework	/(Svelte)/gmi
+PHPStan	Tool	/(PHPStan)/gmi
+PHPUnit	Framework	/(PHPUnit)/gmi
+Behat	Framework	/(Behat)/gmi
+Grumphp	Tool	/(Grumphp)/gmi
+Lambda	Host	/(Lambda)/gmi
+Ansible	Ops	/(Ansible)/gmi
+Puppet	Tool	/(Puppet)\b/gmi
+LESS	Language	/(LESS)/gmi
+Bootstrap	Framework	/(Bootstrap)/gmi
+GitLab	Tool	/(GitLab)/gmi
+Loki	Database	/(Loki)/gmi
+SaaS	Skills	/(SaaS)/gmi
+*/
