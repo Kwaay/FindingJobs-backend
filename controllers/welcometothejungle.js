@@ -1,18 +1,19 @@
-const { Wttj, Stack } = require("../models");
+const { WaitListWTTJ, Stack, Job } = require("../models");
 const puppeteer = require("puppeteer");
 const striptags = require("striptags");
 
 const regexType =
-  /(?<type>CDI|CDD|Freelance|(?:Stage[ .-]?\(?[0-9]?[ .-]?[a-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ]+(?:[ .-]?[0-9]?[ .-]?[a-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ]+)?\)?))/gmi
+  /((BEP|CAP|CDI|CDD|Freelance|Alternance|Stage)[ .-/]?([ .-/]?[ .-/]?(?:Temporaire)[ .-]?)(\((.*)\))?)/gim;
 const regexStart =
   /(Début[ .-]?[:]?\s{2,}?[0-9]?[0-9]?[ .-]?[JFMASOND]?[aévuoce]?[vriûptcn]?[vrsinltoet]?[ilmbe]?[emrb]?[rtbe]?[er]?[e]?[[ .-]?[0-9]?[0-9]?[0-9]?[0-9]?)[ .-]?()/gim;
-const regexStudy = /(Bac[ .-][+][5][ .-]?[ .-\/][ .-]?Master)/gim;
+const regexStudy = /(Bac[ .-][+][0-9][ .-]?[ .-\/][ .-]?Master|Sans[ .-]?Diplôme|Bac[ .-]?[+]?[ .-]?[0-9]?)/gmi
 const regexExperience =
-  /([><][ .-]?[0-9][ .-]?an[s]?|[><][ .-]?[0-9][ .-]?mois)/gim;
+  /([><][ .-]?[0-9][ .-]?an[s]?|[><][ .-]?[0-9]?[ .-]?[0-9]?[ .-]?mois)/gim;
 const regexRemote =
-  /(Télétravail[ .-]?ponctuel[ .-]?autorisé|Télétravail[ .-]?partiel[ .-]? possible|Télétravail[ .-]?total[ .-]?possible)/gim
+  /(Télétravail[ .-]?ponctuel[ .-]?autorisé|Télétravail[ .-]?partiel[ .-]? possible|Télétravail[ .-]?total[ .-]?possible)/gim;
 const regexSalary =
-  /(Salaire[ .-]?entre[ .-]?[0-9]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[e]?[t]?[ .-]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[/]?[ .-]?[m]?[o]?[i]?[s]?)/gim;
+  /(Salaire[ .-]?entre[ .-]?[0-9]?[0-9]?[,]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[e]?[t]?[ .-]?[0-9]?[0-9]?[,]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[\/]?[ .-]?|Salaire[ .-]?[:]?[ .-]?[0-9]?[ ,.-]?[0-9]?[ .-]?[0-9][KM]?[ .-]?[€]?[ .-]?[/]?[ .-]?[jm]?[o]?[ui]?[rs]?)/gim;
+
 
 async function autoScroll(page) {
   await page.evaluate(async () => {
@@ -37,6 +38,34 @@ async function getHTML(browser, URL) {
     const page = await browser.newPage();
     console.log("⏱️ - Fetching page data");
     await page.goto(URL, { timeout: 0 });
+    const name = await page.evaluate(() => {
+      const nameElement = document.querySelector("main section div h1");
+
+      return nameElement.innerText;
+    });
+    console.log(name);
+    const region = await page.evaluate(() => {
+      const regionElement = document.querySelector(
+        "main div div div div ul.sc-1lvyirq-4.hengos"
+      );
+
+      return regionElement.innerText.replace(/\s/g, " ");
+    });
+    const type = (region.match(regexType) || ["Non-indiqué"])[0];
+    const splitType = region.split(type).join("");
+    const start = (splitType.match(regexStart) || ["Non-indiqué"])[0];
+    const splitStart = splitType.split(start).join("");
+    const study = (splitStart.match(regexStudy) || ["Non-indiqué"])[0];
+    const splitStudy = splitStart.split(study).join("");
+    const exp = (splitStudy.match(regexExperience) || ["Non-indiqué"])[0];
+    const splitExp = splitStudy.split(exp).join("");
+    const remote = (splitExp.match(regexRemote) || ["Non-indiqué"])[0];
+    const splitRemote = splitExp.split(remote).join("");
+    const salary = (splitRemote.match(regexSalary) || ["Non-indiqué"])[0];
+    const splitSalary = splitRemote.split(salary).join("");
+    const location = (splitSalary.trim() || "Non-indiqué");
+    console.log(region);
+    console.log(type, location, start, study, exp, remote, salary);
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
         'main div section[data-testid="job-section-description"] '
@@ -44,63 +73,52 @@ async function getHTML(browser, URL) {
       return paragraph.innerHTML;
     });
     const sContent = striptags(content).toLowerCase();
-    // console.log(sContent);
-    const region = await page.evaluate(() => {
-      const regionElement = document.querySelector(
-        "main div div div div ul.sc-1lvyirq-4.hengos"
-      );
-      
-      return regionElement.innerText.replace(/\s/g, " ");
-    });
-    const sRegion = striptags(region).toLowerCase();
-    const JobType = region.match(regexType); 
-    const start = region.match(regexStart);
-    const study = region.match(regexStudy);
-    const exp = region.match(regexExperience);
-    const remote = region.match(regexRemote);
-    const salary = region.match(regexSalary);
-    console.log(JobType, start, study, exp, remote, salary);
-    console.log(region)
-     // console.log("✅ - Page data fetched");
+    console.log("✅ - Page data fetched");
     const presentStacks = findStacks(sContent);
-
+    const jobCreate = Job.create({
+      name,
+      location,
+      link: URL,
+      type,
+      salary,
+      remote,
+      exp,
+      study,
+      start
+    });
     resolve();
   });
 }
 async function findStacks(HTML) {
   const stacks = await Stack.findAll({});
-  presentStacks = []
+  presentStacks = [];
   stacks.forEach(async (stack) => {
     const regex = new RegExp(stack.regex, "gmi");
-     // console.log(regex);
     const search = regex.test(HTML);
-     // console.log(search);
-    if (search) { 
-      presentStacks.push(stack.id)
+    if (search) {
+      presentStacks.push(stack);
     }
   });
   return presentStacks;
 }
-async function filterStack() { 
-
-}
-async function getStacks() {
-  const findAllLinks = await Wttj.findAll({
+async function getStacks(res) {
+  
+  const findAllLinks = await WaitListWTTJ.findAll({
     limit: 20,
   });
-  if (findAllLinks.length < 1) return
+  if (findAllLinks.length < 1) return;
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox"],
   });
   const promises = [];
-  findAllLinks.forEach((link) => {
-    console.log(link);
+  findAllLinks.forEach( async (link) => {
     promises.push(getHTML(browser, link.url));
+    await WaitListWTTJ.destroy({ where: { id: link.id } });
   });
   await Promise.all(promises);
+  getStacks(res)
   await browser.close();
-  // getStacks()
 }
 const waitList = [];
 
@@ -149,7 +167,7 @@ exports.getAllLinks = async (req, res) => {
       const page = await browser.newPage();
       await page.goto(URL);
       console.log("⏱️ - Waiting for Network idle");
-      await page.waitForNetworkIdle({ idleTime: 200, timeout: 90000 });
+      await new Promise((resolve) => {setTimeout(resolve,10000)})
       console.log("✅ - Network idling");
       console.log("⏱️ - Waiting for scroll");
       await autoScroll(page);
@@ -165,7 +183,7 @@ exports.getAllLinks = async (req, res) => {
       });
       waitList.length === 0;
       links.forEach(async (link) => {
-        await Wttj.create({
+        await WaitListWTTJ.create({
           url: link,
         });
         waitList.push(link);
@@ -184,9 +202,21 @@ exports.getAllLinks = async (req, res) => {
   }
 };
 exports.findAllStacks = async (req, res) => {
-  getStacks();
+  const startTime = Date.now();
+  getStacks(res);
+  const endTime = Date.now();
+  const timeElapsed = endTime - startTime;
+  function millisToMinutesAndSeconds(millis) {
+    var minutes = Math.floor(millis / 60000);
+    var seconds = ((millis % 60000) / 1000).toFixed(0);
+    return seconds == 60
+      ? minutes + 1 + ":00"
+      : minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+  }
+  return res.status(200).json({
+    message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
+  });
 };
-
 
 /*
 Kubernetes	Ops	/(kubernetes)/gmi

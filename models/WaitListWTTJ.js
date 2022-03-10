@@ -1,6 +1,6 @@
 module.exports = (Sequelize, DataTypes) =>
   Sequelize.define(
-    "Wttj",
+    "waitListWTTJ",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -29,7 +29,7 @@ module.exports = (Sequelize, DataTypes) =>
       },
     },
     {
-      tableName: "wttj",
+      tableName: "waitListWTTJ",
       timestamps: true,
     }
   );

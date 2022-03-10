@@ -12,19 +12,22 @@ const sequelize = new Sequelize(
     host: "localhost",
     dialect: "mysql",
     timezone: "+01:00",
-    logging: false,
   }
 );
 
 sequelizeNoUpdateAttributes(sequelize);
 
 // Récuperation des models
-const wttj = require("./welcometothejungle")(sequelize, Sequelize.DataTypes);
-const stack = require("./stack")(sequelize, Sequelize.DataTypes);
+const waitListWTTJ = require("./WaitListWTTJ")(sequelize, Sequelize.DataTypes);
+const stack = require("./Stack")(sequelize, Sequelize.DataTypes);
+const job = require("./Job")(sequelize, Sequelize.DataTypes);
 
+stack.belongsToMany(job, {through: 'JobHasStack' })
+job.belongsToMany(stack, {through: 'JobHasStack' })
 
-sequelize.Wttj = wttj;
+sequelize.WaitListWTTJ = waitListWTTJ;
 sequelize.Stack = stack;
+sequelize.Job = job;
 
 // Tentative d'authentification à la base de données
 sequelize
@@ -37,9 +40,9 @@ sequelize
       .then(() => {
         console.log("Tous les models ont été synchronisés avec succès.");
       })
-      .catch(() => {
+      /*.catch(() => {
         console.log("Impossible de synchroniser les models");
-      });
+      });*/
   })
   .catch((error) => {
     console.log("❌ Connexion à MySQL invalide", error);
