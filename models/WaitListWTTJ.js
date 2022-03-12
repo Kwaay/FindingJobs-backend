@@ -1,6 +1,7 @@
 module.exports = (Sequelize, DataTypes) =>
+  // eslint-disable-next-line implicit-arrow-linebreak
   Sequelize.define(
-    "waitListWTTJ",
+    'waitListWTTJ',
     {
       id: {
         type: DataTypes.INTEGER,
@@ -29,7 +30,7 @@ module.exports = (Sequelize, DataTypes) =>
       },
     },
     {
-      tableName: "waitListWTTJ",
+      tableName: 'waitListWTTJ',
       timestamps: true,
-    }
+    },
   );

@@ -1,6 +1,7 @@
 module.exports = (Sequelize, DataTypes) =>
+  // eslint-disable-next-line implicit-arrow-linebreak
   Sequelize.define(
-    "Jobs",
+    'Jobs',
     {
       id: {
         type: DataTypes.INTEGER,
@@ -46,10 +47,10 @@ module.exports = (Sequelize, DataTypes) =>
       start: {
         type: DataTypes.STRING,
         allowNull: false,
-      }
+      },
     },
     {
-      tableName: "jobs",
+      tableName: 'jobs',
       timestamps: true,
-    }
+    },
   );
