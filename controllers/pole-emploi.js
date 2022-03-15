@@ -1,8 +1,10 @@
 /* eslint-disable operator-linebreak */
 const puppeteer = require('puppeteer');
 const striptags = require('striptags');
+const sequelize = require('../models/index');
 
 const { WaitList, Stack, Job } = require('../models');
+require('events').EventEmitter.defaultMaxListeners = Infinity;
 
 const regexType =
   /((Temps?[ .-]?Partiel?|Autres|BEP|CAP|CDI|CDD|Freelance|Alternance|Stage)[ .-/]?([ .-/]?[ .-/]?(?:Temporaire)?[ .-]?)(\((.*)\))?)/gim;
@@ -42,9 +44,7 @@ async function autoScroll(page) {
 }
 
 function parseWTTJResults(browser, URL, iterations = 1) {
-  if (iterations === 1) {
-    console.log('⏱️ - Launching Parse Welcome to the Jungle Results');
-  }
+  console.log('⏱️ - Launching Parse Welcome to the Jungle Results');
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     console.log(`⚠️ - Fetching results from page #${iterations}`);
@@ -66,25 +66,15 @@ function parseWTTJResults(browser, URL, iterations = 1) {
       return linksElement;
     });
     links.forEach(async (link) => {
-      const nLink = link.split('?')[0];
       const checkifExistsInWaitList = await WaitList.findOne({
-        where: {
-          url: nLink,
-          origin: 'WTTJ',
-        },
+        where: { url: link },
       });
-      const checkIfExistsInJobs = await Job.findOne({
-        where: {
-          link: nLink,
-          origin: 'WTTJ',
-        },
-      });
+      const checkIfExistsInJobs = await Job.findOne({ where: { link } });
       if (checkifExistsInWaitList || checkIfExistsInJobs) return;
       await WaitList.create({
-        url: nLink,
-        origin: 'WTTJ',
+        url: link,
       });
-      temporaryWaitList.push(nLink);
+      temporaryWaitList.push(link);
     });
     const hasNextPage = await page.evaluate(async () => {
       const nextBtn = document.querySelector('a[aria-label="Next page"] ');
@@ -95,9 +85,11 @@ function parseWTTJResults(browser, URL, iterations = 1) {
       await parseWTTJResults(browser, `${hasNextPage}`, iterations + 1);
     } else {
       console.log('🎉 - No more pages');
-      console.log(
-        `✅ - Launching Parse Welcome to the Jungle Results with ${temporaryWaitList.length} results`,
-      );
+      setTimeout(() => {
+        console.log(
+          `✅ - Launching Parse Welcome to the Jungle Results with ${temporaryWaitList.length} results`,
+        );
+      }, 5000);
     }
     resolve();
   });
@@ -124,19 +116,16 @@ async function getHTML(browser, URL) {
     await page.goto(URL, { timeout: 0 });
     const name = await page.evaluate(() => {
       const nameElement = document.querySelector('main section div h1');
-      if (nameElement) {
-        return nameElement.innerText;
-      }
-      return 'Non-indiqué';
+
+      return nameElement.innerText;
     });
+    console.log(name);
     const region = await page.evaluate(() => {
       const regionElement = document.querySelector(
         'main div div div div ul.sc-1lvyirq-4.hengos',
       );
-      if (regionElement) {
-        return regionElement.innerText.replace(/\s/g, ' ');
-      }
-      return 'Non-indiqué';
+
+      return regionElement.innerText.replace(/\s/g, ' ');
     });
     const type = (region.match(regexType) || ['Non-indiqué'])[0];
     const splitType = region.split(type).join('');
@@ -155,13 +144,9 @@ async function getHTML(browser, URL) {
       const paragraph = document.querySelector(
         'main div section[data-testid="job-section-description"] ',
       );
-      if (paragraph) {
-        return paragraph.innerHTML;
-      }
-      return 'Non-indiqué';
+      return paragraph.innerHTML;
     });
     const sContent = striptags(content).toLowerCase();
-    await page.close();
     console.log('✅ - Page data fetched');
     const presentStacks = await findStacks(sContent);
     const jobCreate = await Job.create({
@@ -193,7 +178,7 @@ function millisToMinutesAndSeconds(millis) {
     : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-async function getStacks(iterations = 1) {
+async function getStacks() {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
@@ -210,11 +195,11 @@ async function getStacks(iterations = 1) {
     });
     const promises = [];
     findAllLinks.forEach(async (link) => {
-      await promises.push(getHTML(browser, link.url));
+      promises.push(getHTML(browser, link.url));
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getStacks(iterations + 1);
+    await getStacks();
     await browser.close();
     resolve();
   });
@@ -252,6 +237,8 @@ exports.findAllStacks = async (req, res) => {
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();
+  sequelize.query('DELETE FROM JobHasStack');
+  sequelize.query('DELETE FROM jobs');
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox'],

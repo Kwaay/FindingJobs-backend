@@ -48,6 +48,10 @@ module.exports = (Sequelize, DataTypes) =>
         type: DataTypes.STRING,
         allowNull: false,
       },
+      origin: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
     {
       tableName: 'jobs',
