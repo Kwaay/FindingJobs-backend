@@ -12,6 +12,7 @@ const sequelize = new Sequelize(
     host: 'localhost',
     dialect: 'mysql',
     timezone: '+01:00',
+    logging: false,
   },
 );
 
@@ -21,6 +22,7 @@ sequelizeNoUpdateAttributes(sequelize);
 const waitList = require('./WaitList')(sequelize, Sequelize.DataTypes);
 const stack = require('./Stack')(sequelize, Sequelize.DataTypes);
 const job = require('./Job')(sequelize, Sequelize.DataTypes);
+const settings = require('./Settings')(sequelize, Sequelize.DataTypes);
 
 stack.belongsToMany(job, { through: 'JobHasStack' });
 job.belongsToMany(stack, { through: 'JobHasStack' });
@@ -28,6 +30,7 @@ job.belongsToMany(stack, { through: 'JobHasStack' });
 sequelize.WaitList = waitList;
 sequelize.Stack = stack;
 sequelize.Job = job;
+sequelize.Settings = settings;
 
 // Tentative d'authentification à la base de données
 sequelize

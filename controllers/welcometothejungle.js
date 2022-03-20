@@ -123,7 +123,7 @@ async function getHTML(browser, URL) {
     console.log('⏱️ - Fetching page data');
     await page.goto(URL, { timeout: 0 });
     const name = await page.evaluate(() => {
-      const nameElement = document.querySelector('main section div h1');
+      const nameElement = document.querySelector('h1');
       if (nameElement) {
         return nameElement.innerText;
       }
