@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 const striptags = require('striptags');
 const fetch = require('node-fetch');
 
-const { WaitList, Stack, Job } = require('../models');
+const { WaitList, Stack, Job, Settings } = require('../models');
 
 const regexType =
   /((Temps?[ .-]?Partiel?|Autres|BEP|CAP|CDI|CDD|Freelance|Alternance|Stage)[ .-/]?([ .-/]?[ .-/]?(?:Temporaire)?[ .-]?)(\((.*)\))?)/gim;
@@ -48,11 +48,13 @@ async function parsePEResults(browser, URL, req) {
   console.log('🚀 - Launching PE Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
-  const userAgent = req.useragent;
-  console.log(userAgent);
-  await page.setUserAgent(
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3419.0 Safari/537.36',
-  );
+  const userAgent = await Settings.findOne({ where: { id: 1 } })
+  if (!userAgent) {
+    return res.status(404).json({ message: 'UserAgent not found'})
+  }
+  const userAgentSource = JSON.stringify(userAgent.useragent);
+  console.log(userAgentSource);
+  await page.setUserAgent(userAgentSource);
   await page.goto(URL, { waitUntil: 'networkidle2' });
   console.log('⏱️ - Waiting for Network idle');
   await new Promise((resolve2) => {

@@ -21,6 +21,22 @@ exports.getUserAgent = async (req, res) => {
   return true;
 };
 
+exports.createUserAgent = async (req, res) => {
+  // Vérification du format du contenu envoyé
+  try {
+      const userAgent = Settings.create({
+        browser: req.useragent.browser,
+        useragent: req.useragent.source,
+      });
+      if (userAgent) {
+        return res.status(201).json({ message: 'userAgent Created' });
+      }
+  } catch (error) {
+    return res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+  return true;
+};
+
 exports.updateUserAgent = async (req, res) => {
   console.log('UserAgent :', req.useragent.source);
   const userAgentFind = await Settings.findOne({ where: { id: 1 } });
@@ -29,10 +45,11 @@ exports.updateUserAgent = async (req, res) => {
   }
   // Vérification du format du contenu envoyé
   try {
-    let userAgentObject = {};
-    userAgentObject = { ...req.useragent.source };
     const userAgentUpdate = await Settings.update(
-      { ...userAgentObject },
+      { 
+        browser: req.body.browser,
+        useragent: req.body.useragent, 
+      },
       { where: { id: 1 } },
     );
     if (userAgentUpdate) {
