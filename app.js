@@ -5,6 +5,7 @@ const useragent = require('express-useragent');
 const processWaitListRoutes = require('./routes/processWaitList');
 const wttjRoutes = require('./routes/welcometothejungle');
 const peRoutes = require('./routes/pole-emploi');
+const monsterRoutes = require('./routes/monster');
 const stackRoutes = require('./routes/stack');
 const settingsRoutes = require('./routes/settings');
 
@@ -34,6 +35,7 @@ app.use(useragent.express());
 app.use('/api/waitlist', processWaitListRoutes);
 app.use('/api/wttj', wttjRoutes);
 app.use('/api/pe', peRoutes);
+app.use('/api/monster', monsterRoutes);
 app.use('/api/stack', stackRoutes);
 app.use('/api/settings', settingsRoutes);
 

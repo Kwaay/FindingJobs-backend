@@ -14,15 +14,17 @@ const regexHours = /(?:[0-9][0-9]H[0-9]?[0-9]?)/gim;
 const temporaryWaitList = [];
 /* eslint no-console: ["error", { allow: ["log"] }] */
 
-exports.applyTo = (item) => item.origin === 'PE';
+exports.applyTo = (item) => item.origin === 'Monster';
 
-function moreBtn(page) {
+async function moreBtn(page) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const hasMoreButton = await page.evaluate(() => {
-      const moreBtnSelect = document.querySelector('#zoneAfficherPlus > p > a');
+      const moreBtnSelect = document.querySelector(
+        'main > div > nav > section > div > div > div > div > div > button',
+      );
       console.log(moreBtnSelect);
-      if (moreBtnSelect) {
+      if (moreBtnSelect.innerText !== 'Fin des résultats') {
         moreBtnSelect.click();
         return true;
       }
@@ -35,8 +37,27 @@ function moreBtn(page) {
   });
 }
 
+async function autoScroll(page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => {
+      let totalHeight = 0;
+      const distance = 20;
+      const timer = setInterval(() => {
+        const { scrollHeight } = document.body;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+
+        if (totalHeight >= scrollHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  });
+}
+
 async function parsePEResults(browser, URL, res) {
-  console.log('🚀 - Launching PE Parsing');
+  console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
   const userAgent = await Settings.findOne({ where: { id: 1 } });
@@ -52,40 +73,47 @@ async function parsePEResults(browser, URL, res) {
     setTimeout(resolve2, 10000);
   });
   console.log('✅ - Network idling');
+  console.log('⚠️ - Waiting for auto scroll');
+  await autoScroll(page);
+  console.log('✅ - Auto scroll complete');
   console.log('⚠️ - Checking for buttons to load all jobs');
   await moreBtn(page);
   console.log('✅ - All jobs loaded');
   const links = await page.evaluate(() => {
     const elements = Array.from(
-      document.querySelectorAll('a[class="media with-fav"]'),
+      document.querySelectorAll(
+        'main > div > nav > section > div > div > div > div > div > a',
+      ),
     );
     const linksElement = elements.map((element) => element.href);
     return linksElement;
   });
   links.forEach(async (link) => {
+    const nLink = link.split('?')[0];
     const checkifExistsInWaitList = await WaitList.findOne({
       where: {
-        url: link,
-        origin: 'PE',
+        url: nLink,
+        origin: 'Monster',
       },
     });
     const checkIfExistsInJobs = await Job.findOne({
       where: {
-        link,
-        origin: 'PE',
+        link: nLink,
+        origin: 'Monster',
       },
     });
     if (checkifExistsInWaitList || checkIfExistsInJobs) return;
+    console.log(link);
     await WaitList.create({
-      url: link,
-      origin: 'PE',
+      url: nLink,
+      origin: 'Monster',
     });
     temporaryWaitList.push(link);
   });
-  await browser.close();
+  // await browser.close();
   setTimeout(() => {
     console.log(
-      `✅ - Launching Parse PE with ${temporaryWaitList.length} results`,
+      `✅ - Monster Website Parsed with ${temporaryWaitList.length} results`,
     );
   }, 5000);
   return true;
@@ -221,12 +249,12 @@ exports.getAllLinks = async (req, res) => {
   (async () => {
     const startTime = Date.now();
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-gpu'],
+      headless: false,
+      args: ['--no-sandbox'],
     });
     await parsePEResults(
       browser,
-      'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
-      req,
+      'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
     );
 
     const endTime = Date.now();
@@ -258,7 +286,7 @@ exports.reloadOffers = async (req, res) => {
   });
   await parsePEResults(
     browser,
-    'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
+    'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
   );
   await getStacks();
   const endTime = Date.now();
