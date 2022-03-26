@@ -2,7 +2,7 @@ const { Stack } = require('../models');
 
 // eslint-disable-next-line operator-linebreak
 const regexName =
-  /^[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇßØÅÆa-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ/.# ]{1,25}$/;
+  /^[0-9A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇßØÅÆa-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ/.# ]{1,25}$/;
 
 exports.getAllStacks = async (req, res) => {
   try {

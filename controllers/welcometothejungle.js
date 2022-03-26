@@ -20,7 +20,9 @@ const regexSalary =
 
 const temporaryWaitList = [];
 const baseURL = 'https://www.welcometothejungle.com/fr/jobs';
-/* eslint no-console: ["error", { allow: ["log"] }] */
+/* eslint no-console: ['error', { allow: ['log'] }] */
+
+exports.applyTo = (item) => item.origin === 'WTTJ';
 
 async function autoScroll(page) {
   await page.evaluate(async () => {
@@ -60,7 +62,9 @@ function parseWTTJResults(browser, URL, iterations = 1) {
     console.log('✅ - Page scroll complete');
     const links = await page.evaluate(() => {
       const elements = Array.from(
-        document.querySelectorAll('main li article div a[cover]'),
+        document.querySelectorAll(
+          'main > section > div > ol > li > article > div > a',
+        ),
       );
       const linksElement = elements.map((element) => element.href);
       return linksElement;
@@ -87,11 +91,12 @@ function parseWTTJResults(browser, URL, iterations = 1) {
       temporaryWaitList.push(nLink);
     });
     const hasNextPage = await page.evaluate(async () => {
-      const nextBtn = document.querySelector('a[aria-label="Next page"] ');
+      const nextBtn = document.querySelector("a[aria-label='Next page'] ");
       return nextBtn?.href;
     });
     if (hasNextPage) {
       console.log('⚠️ - Next page detected');
+      await page.close();
       await parseWTTJResults(browser, `${hasNextPage}`, iterations + 1);
     } else {
       console.log('🎉 - No more pages');
@@ -116,9 +121,9 @@ async function findStacks(HTML) {
   return presentStacks;
 }
 
-async function getHTML(browser, URL) {
+const getHTML = (browser, URL) =>
   // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve) => {
+  new Promise(async (resolve) => {
     const page = await browser.newPage();
     console.log('⏱️ - Fetching page data');
     await page.goto(URL, { timeout: 0 });
@@ -153,7 +158,7 @@ async function getHTML(browser, URL) {
     const location = splitSalary.trim() || 'Non-indiqué';
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
-        'main div section[data-testid="job-section-description"] ',
+        "main div section[data-testid='job-section-description'] ",
       );
       if (paragraph) {
         return paragraph.innerHTML;
@@ -174,6 +179,7 @@ async function getHTML(browser, URL) {
       exp,
       study,
       start,
+      hours: 'Non-indiqué',
       origin: 'WTTJ',
     });
     const stacksRelations = [];
@@ -183,7 +189,7 @@ async function getHTML(browser, URL) {
     await Promise.all(stacksRelations);
     resolve();
   });
-}
+exports.getHTML = getHTML;
 
 function millisToMinutesAndSeconds(millis) {
   const minutes = Math.floor(millis / 60000);
@@ -198,6 +204,9 @@ async function getStacks(iterations = 1) {
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
       limit: 10,
+      where: {
+        origin: 'WTTJ',
+      },
     });
     if (findAllLinks.length < 1) {
       console.log('🎉 - No more links');
@@ -205,7 +214,7 @@ async function getStacks(iterations = 1) {
       return;
     }
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: ['--no-sandbox'],
     });
     const promises = [];
@@ -214,8 +223,8 @@ async function getStacks(iterations = 1) {
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getStacks(iterations + 1);
     await browser.close();
+    await getStacks(iterations + 1);
     resolve();
   });
 }
@@ -223,7 +232,7 @@ exports.getAllLinks = async (req, res) => {
   (async () => {
     const startTime = Date.now();
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: ['--no-sandbox'],
     });
     await parseWTTJResults(

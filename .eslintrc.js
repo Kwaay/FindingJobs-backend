@@ -12,7 +12,11 @@ module.exports = {
     parser: 'babel-eslint',
     ecmaVersion: 2022,
   },
-  extends: ['airbnb-base', 'plugin:jsdoc/recommended'],
+  extends: [
+    'airbnb-base',
+    'plugin:jsdoc/recommended',
+    'plugin:prettier/recommended',
+  ],
   plugins: ['prettier', 'jsdoc'],
   // add your custom rules here
   rules: {
