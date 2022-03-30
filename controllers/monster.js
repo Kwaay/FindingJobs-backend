@@ -1,14 +1,13 @@
 /* eslint-disable operator-linebreak */
-const puppeteer = require('puppeteer');
 const striptags = require('striptags');
+const { getBrowser } = require('../browser');
 
 const { WaitList, Stack, Job, Settings } = require('../models');
 
-const regexType =
-  /Cont(?:rat)?[ .-]+(?:(?:à)|(?: durée (?:in)?déterminée))+(?: - (?:\d)+ (?:mois|an[s]?))?/gim;
-const regexStudy =
-  /(?:Bac[ ]?\+\d(?:[,]? )?)+(?:(?:et|ou)(?: plus ou)? équivalents(?: [a-z]+)?)?/gim;
-const regexHours = /(?:[0-9][0-9]H[0-9]?[0-9]?)/gim;
+const regexContract =
+  /((?:Intérim)[ /]+(?:CDD))|((?:Freelance))|((?:CDI))|((?:Stage[ /]+Apprentissage))/gim;
+const regexSalary = /((?:€[\d /-]+)+Par (?:jour|an|mois))/gim;
+const regexType = /(?:Temps[ ](?:(Plein|Partiel)))/gim;
 // eslint-enable operator-linebreak */
 
 const temporaryWaitList = [];
@@ -56,7 +55,7 @@ async function autoScroll(page) {
   });
 }
 
-async function parsePEResults(browser, URL, res) {
+async function parseMonsterResults(browser, URL, res) {
   console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
@@ -67,7 +66,7 @@ async function parsePEResults(browser, URL, res) {
   const userAgentSource = JSON.stringify(userAgent.useragent);
   console.log(userAgentSource);
   await page.setUserAgent(userAgentSource);
-  await page.goto(URL, { waitUntil: 'networkidle2' });
+  await page.goto(URL, { timeout: 0 });
   console.log('⏱️ - Waiting for Network idle');
   await new Promise((resolve2) => {
     setTimeout(resolve2, 10000);
@@ -136,72 +135,56 @@ const getHTML = (browser, URL) =>
   new Promise(async (resolve) => {
     const page = await browser.newPage();
     console.log('⏱️ - Fetching page data');
-    await page.goto(URL, { waitUntil: 'networkidle2', timeout: 0 });
+    await page.goto(URL, { timeout: 0 });
+    console.log('1');
+    console.log('2');
     const name = await page.evaluate(() => {
-      const nameElement = document.querySelector('h1');
+      const nameElement = document.querySelector('html body h1');
       if (nameElement) {
         return nameElement.innerText;
       }
       return 'Non-indiqué';
     });
     console.log('name', name);
-    const region = await page.evaluate(() => {
-      const regionElement = document.querySelector(
-        '#contents > div > div > div > div > div > div > div > div > div > p > span:nth-child(1) > span:nth-child(5)',
-      );
+    const location = await page.evaluate(() => {
+      const regionElement = document.querySelector('html body h3');
       if (regionElement) {
         return regionElement.innerText.replace(/\s/g, ' ');
       }
       return 'Non-indiqué';
     });
-    console.log('Region', region);
-    const exp = await page.evaluate(() => {
-      const expElement = document.querySelector(
-        '#contents > div > div > div > div > div > div > div > div > div > ul > li > span > span.skill-name',
-      );
-      if (expElement) {
-        return expElement.innerText.replace(/\s/g, ' ');
-      }
-      return 'Non-indiqué';
-    });
-    console.log('exp', exp);
+    console.log('Region', location);
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
-        '#contents > div > div > div > div > div > div > div > div > div > div.row > div.description-aside.col-sm-4.col-md-5',
+        'html body div#__next div div div div div div div.jobview-containerstyles__JobInformation-sc-16af7k7-4.impbxn',
       );
       if (paragraph) {
         return paragraph.innerText.replace(/\s/g, ' ');
       }
       return 'Non-indiqué';
     });
-    const type = (content.match(regexType) || ['Non-indiqué'])[0];
-    const splitType = content.split(type).join('');
-    const study = (splitType.match(regexStudy) || ['Non-indiqué'])[0];
-    const splitStudy = splitType.split(study).join('');
-    const hours = (splitStudy.match(regexHours) || ['Non-indiqué'])[0];
-    const splitHours = splitStudy.split(hours).join('');
-    if (splitHours.includes('Déplacements')) {
-      splitHours.split('(?Déplacements=>?)');
-    }
-    const salary =
-      JSON.stringify(splitStudy.split('Salaire :')[1]) || 'Non-indiqué';
-
-    const sContent = striptags(splitHours).toLowerCase();
+    const contract = (content.match(regexContract) || ['Non-indiqué'])[0];
+    const splitContract = content.split(contract).join('');
+    const salary = (splitContract.match(regexSalary) || ['Non-indiqué'])[0];
+    const splitSalary = splitContract.split(salary).join('');
+    const type = (splitSalary.match(regexType) || ['Non-indiqué'])[0];
+    const splitType = splitSalary.split(type).join('');
+    const sContent = striptags(splitType).toLowerCase();
     await page.close();
     console.log('✅ - Page data fetched');
     const presentStacks = await findStacks(sContent);
     const jobCreate = await Job.create({
       name,
-      location: region,
+      location,
       link: URL,
-      type,
+      contract,
       salary,
       remote: 'Non-indiqué',
-      exp,
-      study,
+      exp: 'Non-indiqué',
+      study: 'Non-indiqué',
       start: 'Non-indiqué',
-      hours,
-      origin: 'PE',
+      type,
+      origin: 'Monster',
     });
     const stacksRelations = [];
     presentStacks.forEach((stack) => {
@@ -225,9 +208,9 @@ async function getStacks(browser, iterations = 1) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
-      limit: 10,
+      limit: 8,
       where: {
-        origin: 'PE',
+        origin: 'Monster',
       },
     });
     if (findAllLinks.length < 1) {
@@ -248,15 +231,11 @@ async function getStacks(browser, iterations = 1) {
 exports.getAllLinks = async (req, res) => {
   (async () => {
     const startTime = Date.now();
-    const browser = await puppeteer.launch({
-      headless: false,
-      args: ['--no-sandbox'],
-    });
-    await parsePEResults(
+    const browser = await getBrowser();
+    await parseMonsterResults(
       browser,
       'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
     );
-
     const endTime = Date.now();
     const timeElapsed = endTime - startTime;
     return res.status(200).json({
@@ -266,10 +245,7 @@ exports.getAllLinks = async (req, res) => {
 };
 exports.findAllStacks = async (req, res) => {
   const startTime = Date.now();
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: ['--no-sandbox'],
-  });
+  const browser = await getBrowser();
   await getStacks(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
@@ -280,15 +256,12 @@ exports.findAllStacks = async (req, res) => {
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox'],
-  });
-  await parsePEResults(
+  const browser = await getBrowser();
+  await parseMonsterResults(
     browser,
     'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
   );
-  await getStacks();
+  await getStacks(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   return res.status(200).json({

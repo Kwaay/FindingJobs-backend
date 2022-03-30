@@ -1,14 +1,16 @@
 /* eslint-disable operator-linebreak */
-const puppeteer = require('puppeteer');
 const striptags = require('striptags');
+const { getBrowser } = require('../browser');
 
 const { WaitList, Stack, Job, Settings } = require('../models');
 
-const regexType =
+const regexContract =
   /Cont(?:rat)?[ .-]+(?:(?:à)|(?: durée (?:in)?déterminée))+(?: - (?:\d)+ (?:mois|an[s]?))?/gim;
 const regexStudy =
   /(?:Bac[ ]?\+\d(?:[,]? )?)+(?:(?:et|ou)(?: plus ou)? équivalents(?: [a-z]+)?)?/gim;
-const regexHours = /(?:[0-9][0-9]H[0-9]?[0-9]?)/gim;
+const regexType = /(?:[0-9][0-9]H[0-9]?[0-9]?)/gim;
+const regexSalary =
+  /((?:Annuel |Mensuel )de [\d,]+ Euros(?: à [\d,]+ Euros)? sur [\d.,]+(?: mois| an[s]?))/gim;
 // eslint-enable operator-linebreak */
 
 const temporaryWaitList = [];
@@ -82,7 +84,6 @@ async function parsePEResults(browser, URL, res) {
     });
     temporaryWaitList.push(link);
   });
-  await browser.close();
   setTimeout(() => {
     console.log(
       `✅ - Launching Parse PE with ${temporaryWaitList.length} results`,
@@ -103,11 +104,19 @@ async function findStacks(HTML) {
   });
   return presentStacks;
 }
-const getHTML = (browser, URL) =>
+const getHTML = (browser, URL, res) =>
   // eslint-disable-next-line no-async-promise-executor , implicit-arrow-linebreak
   new Promise(async (resolve) => {
     const page = await browser.newPage();
     console.log('⏱️ - Fetching page data');
+    const userAgent = await Settings.findOne({ where: { id: 1 } });
+    if (!userAgent) {
+      // eslint-disable-next-line no-promise-executor-return
+      return res.status(404).json({ message: 'UserAgent not found' });
+    }
+    const userAgentSource = JSON.stringify(userAgent.useragent);
+    console.log(userAgentSource);
+    await page.setUserAgent(userAgentSource);
     await page.goto(URL, { waitUntil: 'networkidle2', timeout: 0 });
     const name = await page.evaluate(() => {
       const nameElement = document.querySelector('h1');
@@ -139,26 +148,23 @@ const getHTML = (browser, URL) =>
     console.log('exp', exp);
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
-        '#contents > div > div > div > div > div > div > div > div > div > div.row > div.description-aside.col-sm-4.col-md-5',
+        'main div.modal-content div div',
       );
       if (paragraph) {
         return paragraph.innerText.replace(/\s/g, ' ');
       }
       return 'Non-indiqué';
     });
-    const type = (content.match(regexType) || ['Non-indiqué'])[0];
-    const splitType = content.split(type).join('');
-    const study = (splitType.match(regexStudy) || ['Non-indiqué'])[0];
-    const splitStudy = splitType.split(study).join('');
-    const hours = (splitStudy.match(regexHours) || ['Non-indiqué'])[0];
-    const splitHours = splitStudy.split(hours).join('');
-    if (splitHours.includes('Déplacements')) {
-      splitHours.split('(?Déplacements=>?)');
-    }
-    const salary =
-      JSON.stringify(splitStudy.split('Salaire :')[1]) || 'Non-indiqué';
-
-    const sContent = striptags(splitHours).toLowerCase();
+    console.log({ content });
+    const contract = (content.match(regexContract) || ['Non-indiqué'])[0];
+    const splitContract = content.split(contract).join('');
+    const study = (splitContract.match(regexStudy) || ['Non-indiqué'])[0];
+    const splitStudy = splitContract.split(study).join('');
+    const type = (splitStudy.match(regexType) || ['Non-indiqué'])[0];
+    const splitType = splitStudy.split(type).join('');
+    const salary = (splitType.match(regexSalary) || ['Non-indiqué'])[0];
+    const splitSalary = splitType.split(salary).join('');
+    const sContent = striptags(splitSalary).toLowerCase();
     await page.close();
     console.log('✅ - Page data fetched');
     const presentStacks = await findStacks(sContent);
@@ -166,13 +172,13 @@ const getHTML = (browser, URL) =>
       name,
       location: region,
       link: URL,
-      type,
+      contract,
       salary,
       remote: 'Non-indiqué',
       exp,
       study,
       start: 'Non-indiqué',
-      hours,
+      type,
       origin: 'PE',
     });
     const stacksRelations = [];
@@ -182,6 +188,8 @@ const getHTML = (browser, URL) =>
     await Promise.all(stacksRelations);
 
     resolve();
+    // eslint-disable-next-line no-promise-executor-return
+    return true;
   });
 exports.getHTML = getHTML;
 
@@ -220,9 +228,7 @@ async function getStacks(browser, iterations = 1) {
 exports.getAllLinks = async (req, res) => {
   (async () => {
     const startTime = Date.now();
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-gpu'],
-    });
+    const browser = await getBrowser();
     await parsePEResults(
       browser,
       'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
@@ -231,6 +237,7 @@ exports.getAllLinks = async (req, res) => {
 
     const endTime = Date.now();
     const timeElapsed = endTime - startTime;
+    await browser.close();
     return res.status(200).json({
       message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
     });
@@ -238,10 +245,7 @@ exports.getAllLinks = async (req, res) => {
 };
 exports.findAllStacks = async (req, res) => {
   const startTime = Date.now();
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: ['--no-sandbox'],
-  });
+  const browser = await getBrowser();
   await getStacks(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
@@ -252,17 +256,15 @@ exports.findAllStacks = async (req, res) => {
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox'],
-  });
+  const browser = await getBrowser();
   await parsePEResults(
     browser,
     'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
   );
-  await getStacks();
+  await getStacks(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
+  await browser.close();
   return res.status(200).json({
     message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
   });

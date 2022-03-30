@@ -24,7 +24,7 @@ module.exports = (Sequelize, DataTypes) =>
         type: DataTypes.STRING,
         allowNull: false,
       },
-      type: {
+      contract: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -48,7 +48,7 @@ module.exports = (Sequelize, DataTypes) =>
         type: DataTypes.STRING,
         allowNull: false,
       },
-      hours: {
+      type: {
         type: DataTypes.STRING,
         allowNull: false,
       },
