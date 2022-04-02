@@ -21,7 +21,7 @@ module.exports = (Sequelize, DataTypes) =>
         allowNull: false,
       },
       link: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false,
       },
       contract: {

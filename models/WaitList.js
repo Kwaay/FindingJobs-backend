@@ -13,7 +13,7 @@ module.exports = (Sequelize, DataTypes) =>
         },
       },
       url: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false,
       },
       origin: {

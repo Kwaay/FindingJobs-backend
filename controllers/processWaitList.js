@@ -3,9 +3,18 @@ const { getBrowser } = require('../browser');
 
 const controllers = [];
 
+exports.crawl = async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
+  for (const ctrl of controllers) {
+    // eslint-disable-next-line no-await-in-loop
+    await ctrl.getAllLinks();
+  }
+  return res.status(200).json({ message: `✅ - Crawl successfully completed` });
+};
+
 exports.selectControllers = async (req, res) => {
   const waitList = await WaitList.findAll({
-    limit: 20,
+    limit: 5,
   });
   if (!waitList) {
     return res
@@ -14,15 +23,16 @@ exports.selectControllers = async (req, res) => {
   }
   const browser = await getBrowser();
   console.log(browser);
-  waitList.forEach((item) => {
-    controllers.forEach((ctrl) => {
+  console.log({ waitList });
+  waitList.forEach(async (item) => {
+    controllers.forEach(async (ctrl) => {
       if (ctrl.applyTo(item)) {
-        ctrl.getHTML(browser, item.url);
-        WaitList.destroy({ where: { id: item.id } });
+        await ctrl.findData();
+        await WaitList.destroy({ where: { id: item.id } });
       }
     });
   });
-  return true;
+  return res.status(200).json({ message: 'WaitList successfully proceded ' });
 };
 
 exports.addController = (ctrl) => {

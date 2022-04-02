@@ -37,13 +37,13 @@ function moreBtn(page) {
   });
 }
 
-async function parsePEResults(browser, URL, res) {
+async function crawlResults(browser, URL) {
   console.log('🚀 - Launching PE Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
   const userAgent = await Settings.findOne({ where: { id: 1 } });
   if (!userAgent) {
-    return res.status(404).json({ message: 'UserAgent not found' });
+    return '404';
   }
   const userAgentSource = JSON.stringify(userAgent.useragent);
   console.log(userAgentSource);
@@ -201,7 +201,7 @@ function millisToMinutesAndSeconds(millis) {
     : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-async function getStacks(browser, iterations = 1) {
+const getData = (browser, iterations = 1) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
@@ -213,7 +213,6 @@ async function getStacks(browser, iterations = 1) {
     if (findAllLinks.length < 1) {
       console.log('🎉 - No more links');
       resolve();
-      return;
     }
     const promises = [];
     findAllLinks.forEach(async (link) => {
@@ -221,47 +220,42 @@ async function getStacks(browser, iterations = 1) {
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getStacks(browser, iterations + 1);
+    await getData(browser, iterations + 1);
     resolve();
   });
-}
-exports.getAllLinks = async (req, res) => {
-  (async () => {
-    const startTime = Date.now();
-    const browser = await getBrowser();
-    await parsePEResults(
-      browser,
-      'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
-      req,
-    );
-
-    const endTime = Date.now();
-    const timeElapsed = endTime - startTime;
-    await browser.close();
-    return res.status(200).json({
-      message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
-    });
-  })();
 };
-exports.findAllStacks = async (req, res) => {
+exports.getData = getData;
+
+exports.getAllLinks = async () => {
   const startTime = Date.now();
   const browser = await getBrowser();
-  await getStacks(browser);
+  await crawlResults(
+    browser,
+    'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
+  );
+
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
-  return res.status(200).json({
-    message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
-  });
+  await browser.close();
+  return timeElapsed;
+};
+exports.findData = async () => {
+  const startTime = Date.now();
+  const browser = await getBrowser();
+  await getData(browser);
+  const endTime = Date.now();
+  const timeElapsed = endTime - startTime;
+  return timeElapsed;
 };
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();
   const browser = await getBrowser();
-  await parsePEResults(
+  await crawlResults(
     browser,
     'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
   );
-  await getStacks(browser);
+  await getData(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   await browser.close();

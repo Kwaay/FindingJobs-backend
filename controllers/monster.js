@@ -55,13 +55,13 @@ async function autoScroll(page) {
   });
 }
 
-async function parseMonsterResults(browser, URL, res) {
+async function crawlResults(browser, URL) {
   console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
   const userAgent = await Settings.findOne({ where: { id: 1 } });
   if (!userAgent) {
-    return res.status(404).json({ message: 'UserAgent not found' });
+    return '404 - UserAgent not found';
   }
   const userAgentSource = JSON.stringify(userAgent.useragent);
   console.log(userAgentSource);
@@ -136,8 +136,6 @@ const getHTML = (browser, URL) =>
     const page = await browser.newPage();
     console.log('⏱️ - Fetching page data');
     await page.goto(URL, { timeout: 0 });
-    console.log('1');
-    console.log('2');
     const name = await page.evaluate(() => {
       const nameElement = document.querySelector('html body h1');
       if (nameElement) {
@@ -145,7 +143,6 @@ const getHTML = (browser, URL) =>
       }
       return 'Non-indiqué';
     });
-    console.log('name', name);
     const location = await page.evaluate(() => {
       const regionElement = document.querySelector('html body h3');
       if (regionElement) {
@@ -153,7 +150,6 @@ const getHTML = (browser, URL) =>
       }
       return 'Non-indiqué';
     });
-    console.log('Region', location);
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
         'html body div#__next div div div div div div div.jobview-containerstyles__JobInformation-sc-16af7k7-4.impbxn',
@@ -204,7 +200,7 @@ function millisToMinutesAndSeconds(millis) {
     : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-async function getStacks(browser, iterations = 1) {
+const getData = (browser, iterations = 1) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
@@ -224,44 +220,41 @@ async function getStacks(browser, iterations = 1) {
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getStacks(browser, iterations + 1);
+    await getData(browser, iterations + 1);
     resolve();
   });
-}
-exports.getAllLinks = async (req, res) => {
-  (async () => {
-    const startTime = Date.now();
-    const browser = await getBrowser();
-    await parseMonsterResults(
-      browser,
-      'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
-    );
-    const endTime = Date.now();
-    const timeElapsed = endTime - startTime;
-    return res.status(200).json({
-      message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
-    });
-  })();
 };
-exports.findAllStacks = async (req, res) => {
+exports.getData = getData;
+
+exports.getAllLinks = async () => {
   const startTime = Date.now();
   const browser = await getBrowser();
-  await getStacks(browser);
+  await crawlResults(
+    browser,
+    'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
+  );
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
-  return res.status(200).json({
-    message: `⌚ - Time elapsed : ${millisToMinutesAndSeconds(timeElapsed)}`,
-  });
+  return timeElapsed;
+};
+
+exports.findData = async () => {
+  const startTime = Date.now();
+  const browser = await getBrowser();
+  await getData(browser);
+  const endTime = Date.now();
+  const timeElapsed = endTime - startTime;
+  return timeElapsed;
 };
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();
   const browser = await getBrowser();
-  await parseMonsterResults(
+  await crawlResults(
     browser,
     'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
   );
-  await getStacks(browser);
+  await getData(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   return res.status(200).json({

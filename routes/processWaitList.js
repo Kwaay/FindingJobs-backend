@@ -10,6 +10,7 @@ processWaitListCtrl.addController(monsterCtrl);
 
 const router = express.Router();
 
+router.get('/crawl', processWaitListCtrl.crawl);
 router.get('/', processWaitListCtrl.selectControllers);
 
 module.exports = router;
