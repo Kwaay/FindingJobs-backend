@@ -13,7 +13,7 @@ const regexType = /(?:Temps[ ](?:(Plein|Partiel)))/gim;
 const temporaryWaitList = [];
 /* eslint no-console: ["error", { allow: ["log"] }] */
 
-exports.applyTo = (item) => item.origin === 'Monster';
+exports.applyTo = async (item) => (await item.origin) === 'Monster';
 
 async function moreBtn(page) {
   // eslint-disable-next-line no-async-promise-executor
@@ -22,7 +22,6 @@ async function moreBtn(page) {
       const moreBtnSelect = document.querySelector(
         'main > div > nav > section > div > div > div > div > div > button',
       );
-      console.log(moreBtnSelect);
       if (moreBtnSelect.innerText !== 'Fin des résultats') {
         moreBtnSelect.click();
         return true;
@@ -64,7 +63,6 @@ async function crawlResults(browser, URL) {
     return '404 - UserAgent not found';
   }
   const userAgentSource = JSON.stringify(userAgent.useragent);
-  console.log(userAgentSource);
   await page.setUserAgent(userAgentSource);
   await page.goto(URL, { timeout: 0 });
   console.log('⏱️ - Waiting for Network idle');
@@ -102,14 +100,13 @@ async function crawlResults(browser, URL) {
       },
     });
     if (checkifExistsInWaitList || checkIfExistsInJobs) return;
-    console.log(link);
     await WaitList.create({
       url: nLink,
       origin: 'Monster',
     });
     temporaryWaitList.push(link);
   });
-  // await browser.close();
+  await browser.close();
   setTimeout(() => {
     console.log(
       `✅ - Monster Website Parsed with ${temporaryWaitList.length} results`,
@@ -200,7 +197,7 @@ function millisToMinutesAndSeconds(millis) {
     : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-const getData = (browser, iterations = 1) => {
+const getData = async (browser, iterations = 1) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
@@ -209,19 +206,18 @@ const getData = (browser, iterations = 1) => {
         origin: 'Monster',
       },
     });
-    if (findAllLinks.length < 1) {
-      console.log('🎉 - No more links');
-      resolve();
-      return;
-    }
     const promises = [];
     findAllLinks.forEach(async (link) => {
       await promises.push(getHTML(browser, link.url));
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getData(browser, iterations + 1);
+    console.log(findAllLinks);
+    if (findAllLinks.length > 1) {
+      await getData(browser, iterations + 1);
+    }
     resolve();
+    console.log('🎉 - No more links');
   });
 };
 exports.getData = getData;
@@ -233,6 +229,7 @@ exports.getAllLinks = async () => {
     browser,
     'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
   );
+  await browser.close();
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   return timeElapsed;

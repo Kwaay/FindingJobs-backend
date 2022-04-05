@@ -22,7 +22,7 @@ const temporaryWaitList = [];
 const baseURL = 'https://www.welcometothejungle.com/fr/jobs';
 /* eslint no-console: ['error', { allow: ['log'] }] */
 
-exports.applyTo = (item) => item.origin === 'WTTJ';
+exports.applyTo = async (item) => (await item.origin) === 'WTTJ';
 
 async function autoScroll(page) {
   await page.evaluate(async () => {
@@ -199,7 +199,7 @@ function millisToMinutesAndSeconds(millis) {
     : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-const getData = (browser, iterations = 1) => {
+const getData = async (browser, iterations = 1) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
@@ -208,14 +208,16 @@ const getData = (browser, iterations = 1) => {
         origin: 'WTTJ',
       },
     });
-    if (findAllLinks === null || undefined) return;
     const promises = [];
     findAllLinks.forEach(async (link) => {
       await promises.push(getHTML(browser, link.url));
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getData(browser, iterations + 1);
+    console.log(findAllLinks);
+    if (findAllLinks.length > 1) {
+      await getData(browser, iterations + 1);
+    }
     resolve();
     console.log('🎉 - No more links');
   });

@@ -16,7 +16,7 @@ const regexSalary =
 const temporaryWaitList = [];
 /* eslint no-console: ["error", { allow: ["log"] }] */
 
-exports.applyTo = (item) => item.origin === 'PE';
+exports.applyTo = async (item) => (await item.origin) === 'PE';
 
 function moreBtn(page) {
   // eslint-disable-next-line no-async-promise-executor
@@ -46,7 +46,6 @@ async function crawlResults(browser, URL) {
     return '404';
   }
   const userAgentSource = JSON.stringify(userAgent.useragent);
-  console.log(userAgentSource);
   await page.setUserAgent(userAgentSource);
   await page.goto(URL, { waitUntil: 'networkidle2' });
   console.log('⏱️ - Waiting for Network idle');
@@ -115,7 +114,6 @@ const getHTML = (browser, URL, res) =>
       return res.status(404).json({ message: 'UserAgent not found' });
     }
     const userAgentSource = JSON.stringify(userAgent.useragent);
-    console.log(userAgentSource);
     await page.setUserAgent(userAgentSource);
     await page.goto(URL, { waitUntil: 'networkidle2', timeout: 0 });
     const name = await page.evaluate(() => {
@@ -125,7 +123,6 @@ const getHTML = (browser, URL, res) =>
       }
       return 'Non-indiqué';
     });
-    console.log('name', name);
     const region = await page.evaluate(() => {
       const regionElement = document.querySelector(
         '#contents > div > div > div > div > div > div > div > div > div > p > span:nth-child(1) > span:nth-child(5)',
@@ -135,7 +132,6 @@ const getHTML = (browser, URL, res) =>
       }
       return 'Non-indiqué';
     });
-    console.log('Region', region);
     const exp = await page.evaluate(() => {
       const expElement = document.querySelector(
         '#contents > div > div > div > div > div > div > div > div > div > ul > li > span > span.skill-name',
@@ -145,7 +141,6 @@ const getHTML = (browser, URL, res) =>
       }
       return 'Non-indiqué';
     });
-    console.log('exp', exp);
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
         'main div.modal-content div div',
@@ -155,7 +150,6 @@ const getHTML = (browser, URL, res) =>
       }
       return 'Non-indiqué';
     });
-    console.log({ content });
     const contract = (content.match(regexContract) || ['Non-indiqué'])[0];
     const splitContract = content.split(contract).join('');
     const study = (splitContract.match(regexStudy) || ['Non-indiqué'])[0];
@@ -201,7 +195,7 @@ function millisToMinutesAndSeconds(millis) {
     : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-const getData = (browser, iterations = 1) => {
+const getData = async (browser, iterations = 1) => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const findAllLinks = await WaitList.findAll({
@@ -210,18 +204,18 @@ const getData = (browser, iterations = 1) => {
         origin: 'PE',
       },
     });
-    if (findAllLinks.length < 1) {
-      console.log('🎉 - No more links');
-      resolve();
-    }
     const promises = [];
     findAllLinks.forEach(async (link) => {
       await promises.push(getHTML(browser, link.url));
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    await getData(browser, iterations + 1);
+    console.log(findAllLinks);
+    if (findAllLinks.length > 1) {
+      await getData(browser, iterations + 1);
+    }
     resolve();
+    console.log('🎉 - No more links');
   });
 };
 exports.getData = getData;
@@ -234,9 +228,9 @@ exports.getAllLinks = async () => {
     'https://candidat.pole-emploi.fr/offres/recherche?motsCles=D%C3%A9veloppeur&offresPartenaires=true&rayon=10&tri=0',
   );
 
+  await browser.close();
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
-  await browser.close();
   return timeElapsed;
 };
 exports.findData = async () => {
