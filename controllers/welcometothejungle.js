@@ -214,7 +214,6 @@ const getData = async (browser, iterations = 1) => {
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    console.log(findAllLinks);
     if (findAllLinks.length > 1) {
       await getData(browser, iterations + 1);
     }
@@ -234,7 +233,7 @@ exports.getAllLinks = async () => {
   await browser.close();
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
-  return timeElapsed;
+  return millisToMinutesAndSeconds(timeElapsed);
 };
 
 exports.findData = async () => {
@@ -243,7 +242,7 @@ exports.findData = async () => {
   await getData(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
-  return timeElapsed;
+  return millisToMinutesAndSeconds(timeElapsed);
 };
 
 exports.reloadOffers = async (req, res) => {

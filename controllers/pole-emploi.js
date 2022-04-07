@@ -23,7 +23,6 @@ function moreBtn(page) {
   return new Promise(async (resolve) => {
     const hasMoreButton = await page.evaluate(() => {
       const moreBtnSelect = document.querySelector('#zoneAfficherPlus > p > a');
-      console.log(moreBtnSelect);
       if (moreBtnSelect) {
         moreBtnSelect.click();
         return true;
@@ -210,7 +209,6 @@ const getData = async (browser, iterations = 1) => {
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    console.log(findAllLinks);
     if (findAllLinks.length > 1) {
       await getData(browser, iterations + 1);
     }

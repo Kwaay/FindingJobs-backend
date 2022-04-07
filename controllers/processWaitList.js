@@ -16,9 +16,7 @@ function millisToMinutesAndSeconds(millis) {
 
 exports.crawl = async (req, res) => {
   const startTime = Date.now();
-  // eslint-disable-next-line no-restricted-syntax
   for (const ctrl of controllers) {
-    // eslint-disable-next-line no-await-in-loop
     await ctrl.getAllLinks();
   }
   const endTime = Date.now();
@@ -39,13 +37,10 @@ async function processLinks(browser, iterations = 1) {
     });
     if (!waitList) {
       console.log(`🎉 - WaitList successfully proceded`);
-      // eslint-disable-next-line no-promise-executor-return
       return resolve();
     }
-    console.log({ waitList });
     const promises = [];
     for (const item of waitList) {
-      // eslint-disable-next-line no-restricted-syntax
       for (const ctrl of controllers) {
         if (await ctrl.applyTo(item)) {
           await promises.push(ctrl.getHTML(browser, item.url));
@@ -53,7 +48,6 @@ async function processLinks(browser, iterations = 1) {
         }
       }
     }
-    console.log({ promises });
     await Promise.all(promises);
     if (waitList.length > 1) {
       await processLinks(browser, iterations + 1);
@@ -64,7 +58,7 @@ async function processLinks(browser, iterations = 1) {
 
 exports.selectControllers = async (req, res) => {
   const startTime = Date.now();
-  let browser = await getBrowser();
+  const browser = await getBrowser();
   await processLinks(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;

@@ -212,7 +212,6 @@ const getData = async (browser, iterations = 1) => {
       await WaitList.destroy({ where: { id: link.id } });
     });
     await Promise.all(promises);
-    console.log(findAllLinks);
     if (findAllLinks.length > 1) {
       await getData(browser, iterations + 1);
     }
