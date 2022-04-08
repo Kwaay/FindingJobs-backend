@@ -2,7 +2,7 @@
 const striptags = require('striptags');
 const { getBrowser } = require('../browser');
 
-const { WaitList, Stack, Job, Settings } = require('../models');
+const { WaitList, Stack, Job, UserAgent } = require('../models');
 
 const regexContract =
   /Cont(?:rat)?[ .-]+(?:(?:à)|(?: durée (?:in)?déterminée))+(?: - (?:\d)+ (?:mois|an[s]?))?/gim;
@@ -40,7 +40,7 @@ async function crawlResults(browser, URL) {
   console.log('🚀 - Launching PE Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
-  const userAgent = await Settings.findOne({ where: { id: 1 } });
+  const userAgent = await UserAgent.findOne({ where: { id: 1 } });
   if (!userAgent) {
     return '404';
   }
@@ -107,7 +107,7 @@ const getHTML = (browser, URL, res) =>
   new Promise(async (resolve) => {
     const page = await browser.newPage();
     console.log('⏱️ - Fetching page data');
-    const userAgent = await Settings.findOne({ where: { id: 1 } });
+    const userAgent = await UserAgent.findOne({ where: { id: 1 } });
     if (!userAgent) {
       // eslint-disable-next-line no-promise-executor-return
       return res.status(404).json({ message: 'UserAgent not found' });

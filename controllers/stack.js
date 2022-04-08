@@ -23,9 +23,7 @@ exports.getAllStacks = async (req, res) => {
 exports.createStack = async (req, res) => {
   // Vérification du format du contenu envoyé
   if (!regexName.test(req.body.name)) {
-    return res
-      .status(400)
-      .json({ message: "Name doesn't have a correct format" });
+    return res.status(400).json({ message: 'Name format is incorrect' });
   }
   const nameExist = await Stack.findOne({
     where: {
@@ -45,9 +43,10 @@ exports.createStack = async (req, res) => {
       return res.status(201).json({ message: 'Stack Created' });
     }
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: 'Something went wrong. Please try again.' });
+    return res.status(500).json({
+      message:
+        'Something happened during the stack creation process, please try again',
+    });
   }
   return true;
 };
@@ -64,9 +63,10 @@ exports.getOneStack = async (req, res) => {
     }
     return res.status(404).json({ message: 'Stack not found' });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: 'Cannot get this Stack. Please try again.' });
+    res.status(500).json({
+      message:
+        'Something happened during the getOneStack process, please try again',
+    });
   }
   return true;
 };
@@ -78,9 +78,7 @@ exports.updateOneStack = async (req, res) => {
   }
   // Vérification du format du contenu envoyé
   if (req.body.name !== undefined && !regexName.test(req.body.name)) {
-    return res
-      .status(400)
-      .json({ message: "Name doesn't have a correct format" });
+    return res.status(400).json({ message: 'Name format is incorrect' });
   }
   try {
     if (req.body.name !== null && req.body.name !== undefined) {
@@ -88,7 +86,7 @@ exports.updateOneStack = async (req, res) => {
         where: { name: req.body.name },
       });
       if (checkStack) {
-        return res.status(409).json({ message: 'Name has already been used' });
+        return res.status(409).json({ message: 'Name already exists' });
       }
     }
     let stackObject = {};
@@ -101,9 +99,10 @@ exports.updateOneStack = async (req, res) => {
       return res.status(200).json({ message: 'Stack has been modified' });
     }
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: 'Something went wrong. Please try again.' });
+    return res.status(500).json({
+      message:
+        'Something happened during modifying the stack selected, please try again',
+    });
   }
   return true;
 };
@@ -122,8 +121,9 @@ exports.deleteOneStack = async (req, res) => {
     }
     return true;
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: 'Something went wrong. Please try again.' });
+    return res.status(500).json({
+      message:
+        'Something happened during deleting the stack selected, please try again',
+    });
   }
 };

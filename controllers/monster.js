@@ -2,7 +2,7 @@
 const striptags = require('striptags');
 const { getBrowser } = require('../browser');
 
-const { WaitList, Stack, Job, Settings } = require('../models');
+const { WaitList, Stack, Job, UserAgent } = require('../models');
 
 const regexContract =
   /((?:Intérim)[ /]+(?:CDD))|((?:Freelance))|((?:CDI))|((?:Stage[ /]+Apprentissage))/gim;
@@ -58,7 +58,7 @@ async function crawlResults(browser, URL) {
   console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
-  const userAgent = await Settings.findOne({ where: { id: 1 } });
+  const userAgent = await UserAgent.findOne({ where: { id: 1 } });
   if (!userAgent) {
     return '404 - UserAgent not found';
   }

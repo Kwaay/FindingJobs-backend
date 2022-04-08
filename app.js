@@ -8,7 +8,7 @@ const wttjRoutes = require('./routes/welcometothejungle');
 const peRoutes = require('./routes/pole-emploi');
 const monsterRoutes = require('./routes/monster');
 const stackRoutes = require('./routes/stack');
-const settingsRoutes = require('./routes/settings');
+const userAgentRoutes = require('./routes/useragent');
 const userRoutes = require('./routes/user');
 const jobRoutes = require('./routes/job');
 
@@ -44,6 +44,6 @@ app.use('/api/wttj', wttjRoutes);
 app.use('/api/pe', peRoutes);
 app.use('/api/monster', monsterRoutes);
 app.use('/api/stack', stackRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/useragent', userAgentRoutes);
 
 module.exports = app;

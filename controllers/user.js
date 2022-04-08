@@ -18,29 +18,19 @@ const regexAwswer =
 
 exports.signup = async (req, res) => {
   if (!regexUsername.test(req.body.username)) {
-    return res
-      .status(400)
-      .json({ message: "Username doesn't have a correct format" });
+    return res.status(400).json({ message: 'Username format is incorrect' });
   }
   if (!regexEmail.test(req.body.email)) {
-    return res
-      .status(400)
-      .json({ message: "Email doesn't have a correct format" });
+    return res.status(400).json({ message: 'Email format is incorrect' });
   }
   if (!regexPassword.test(req.body.password)) {
-    return res
-      .status(400)
-      .json({ message: "Password doesn't have a correct format" });
+    return res.status(400).json({ message: 'Password format is incorrect' });
   }
   if (!regexQuestion.test(req.body.question)) {
-    return res
-      .status(400)
-      .json({ message: "Question doesn't have a correct format" });
+    return res.status(400).json({ message: 'Question format is incorrect' });
   }
   if (!regexAwswer.test(req.body.awswer)) {
-    return res
-      .status(400)
-      .json({ message: "Awswer doesn't have a correct format" });
+    return res.status(400).json({ message: 'Awswer format is incorrect' });
   }
   delete req.body.avatar;
   delete req.body.rank;
@@ -216,7 +206,7 @@ exports.forgot = async (req, res) => {
 };
 exports.forgotModify = async (req, res) => {
   if (!regexEmail.test(req.body.email)) {
-    return res.status(404).json({ message: 'Email format is incorrect' });
+    return res.status(400).json({ message: 'Email format is incorrect' });
   }
   if (!regexAwswer.test(req.body.awswer)) {
     return res.status(400).json({ message: 'Awswer format is incorrect' });
@@ -227,7 +217,9 @@ exports.forgotModify = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
-      return res.status(404).json({ message: "User doesn't exist" });
+      return res
+        .status(404)
+        .json({ message: "Email isn't related to an account" });
     }
     if (user.awswer !== req.body.awswer) {
       return res.status(400).json({ message: 'This awswer is false' });
@@ -276,29 +268,19 @@ exports.getAllUsers = async (req, res) => {
 };
 exports.createUser = async (req, res) => {
   if (!regexUsername.test(req.body.username)) {
-    return res
-      .status(400)
-      .json({ message: "Username doesn't have a correct format" });
+    return res.status(400).json({ message: 'Username format is incorrect' });
   }
   if (!regexEmail.test(req.body.email)) {
-    return res
-      .status(400)
-      .json({ message: "Email doesn't have a correct format" });
+    return res.status(400).json({ message: 'Email format is incorrect' });
   }
   if (!regexPassword.test(req.body.password)) {
-    return res
-      .status(400)
-      .json({ message: "Password doesn't have a correct format" });
+    return res.status(400).json({ message: 'Password format is incorrect' });
   }
   if (!regexQuestion.test(req.body.question)) {
-    return res
-      .status(400)
-      .json({ message: "Question doesn't have a correct format" });
+    return res.status(400).json({ message: 'Question format is incorrect' });
   }
   if (!regexAwswer.test(req.body.awswer)) {
-    return res
-      .status(400)
-      .json({ message: "Awswer doesn't have a correct format" });
+    return res.status(400).json({ message: 'Awswer format is incorrect' });
   }
   delete req.body.avatar;
   delete req.body.rank;
@@ -392,9 +374,9 @@ exports.getOneUser = async (req, res) => {
   const findOneUser = await User.findOne({
     where: { id: req.params.UserId },
   });
-  if (findOneUser) {
-    return res.status(500).json({
-      message: 'Something happened during getting all users, please try again',
+  if (!findOneUser) {
+    return res.status(404).json({
+      message: 'User not found',
     });
   }
   return res.status(200).json(findOneUser);
@@ -402,42 +384,32 @@ exports.getOneUser = async (req, res) => {
 exports.modifyOneUser = async (req, res) => {
   const user = await User.findOne({ where: { id: req.params.UserId } });
   if (!user) {
-    return res.status(404).json({ message: "User doesn't exist" });
+    return res.status(404).json({ message: 'User not found' });
   }
   delete req.body.rank;
   if (
     req.body.username !== undefined &&
     !regexUsername.test(req.body.username)
   ) {
-    return res
-      .status(400)
-      .json({ message: "Username doesn't have a correct format" });
+    return res.status(400).json({ message: 'Username format is incorrect' });
   }
   if (req.body.email !== undefined && !regexEmail.test(req.body.email)) {
-    return res
-      .status(400)
-      .json({ message: "Email doesn't have a correct format" });
+    return res.status(400).json({ message: 'Email format is incorrect' });
   }
   if (
     req.body.password !== undefined &&
     !regexPassword.test(req.body.password)
   ) {
-    return res
-      .status(400)
-      .json({ message: "Password doesn't have a correct format" });
+    return res.status(400).json({ message: 'Password format is incorrect' });
   }
   if (
     req.body.question !== undefined &&
     !regexQuestion.test(req.body.question)
   ) {
-    return res
-      .status(400)
-      .json({ message: "Question doesn't have a correct format" });
+    return res.status(400).json({ message: 'Question format is incorrect' });
   }
   if (req.body.awswer !== undefined && !regexAwswer.test(req.body.awswer)) {
-    return res
-      .status(400)
-      .json({ message: "Awswer doesn't have a correct format" });
+    return res.status(400).json({ message: 'Awswer format is incorrect' });
   }
   try {
     if (req.body.email.length < 1) {
