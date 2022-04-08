@@ -10,6 +10,7 @@ const monsterRoutes = require('./routes/monster');
 const stackRoutes = require('./routes/stack');
 const settingsRoutes = require('./routes/settings');
 const userRoutes = require('./routes/user');
+const jobRoutes = require('./routes/job');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Base URL pour les routes
 app.use('/api/user', userRoutes);
+app.use('/api/job', jobRoutes);
 app.use('/api/waitlist', processWaitListRoutes);
 app.use('/api/wttj', wttjRoutes);
 app.use('/api/pe', peRoutes);
