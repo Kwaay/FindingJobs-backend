@@ -18,6 +18,7 @@ const sequelize = new Sequelize(
 sequelizeNoUpdateAttributes(sequelize);
 
 // Récuperation des models
+const user = require('./User')(sequelize, Sequelize.DataTypes);
 const waitList = require('./WaitList')(sequelize, Sequelize.DataTypes);
 const stack = require('./Stack')(sequelize, Sequelize.DataTypes);
 const job = require('./Job')(sequelize, Sequelize.DataTypes);
@@ -26,6 +27,7 @@ const settings = require('./Settings')(sequelize, Sequelize.DataTypes);
 stack.belongsToMany(job, { through: 'JobHasStack' });
 job.belongsToMany(stack, { through: 'JobHasStack' });
 
+sequelize.User = user;
 sequelize.WaitList = waitList;
 sequelize.Stack = stack;
 sequelize.Job = job;
