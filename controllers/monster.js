@@ -54,7 +54,7 @@ async function autoScroll(page) {
   });
 }
 
-const crawlResults = async (browser, URL) => {
+async function crawlResults(browser, URL) {
   console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
@@ -113,8 +113,7 @@ const crawlResults = async (browser, URL) => {
     );
   }, 5000);
   return true;
-};
-exports.crawlResults = crawlResults;
+}
 
 async function findStacks(HTML) {
   const stacks = await Stack.findAll({});
@@ -222,7 +221,7 @@ const getData = async (browser, iterations = 1) => {
 };
 exports.getData = getData;
 
-exports.getAllLinks = async () => {
+const getAllLinks = async () => {
   const startTime = Date.now();
   const browser = await getBrowser();
   await crawlResults(
@@ -234,6 +233,7 @@ exports.getAllLinks = async () => {
   const timeElapsed = endTime - startTime;
   return timeElapsed;
 };
+exports.getAllLinks = getAllLinks;
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();

@@ -43,7 +43,7 @@ async function autoScroll(page) {
   });
 }
 
-const crawlResults = async (browser, URL, iterations = 1) => {
+async function crawlResults(browser, URL, iterations = 1) {
   if (iterations === 1) {
     console.log('⏱️ - Launching Parse Welcome to the Jungle Results');
   }
@@ -106,8 +106,7 @@ const crawlResults = async (browser, URL, iterations = 1) => {
     }
     resolve();
   });
-};
-exports.crawlResults = crawlResults;
+}
 
 async function findStacks(HTML) {
   const stacks = await Stack.findAll({});
@@ -224,7 +223,7 @@ const getData = async (browser, iterations = 1) => {
 };
 exports.getData = getData;
 
-exports.getAllLinks = async () => {
+const getAllLinks = async () => {
   const startTime = Date.now();
   const browser = await getBrowser();
   await crawlResults(
@@ -236,6 +235,7 @@ exports.getAllLinks = async () => {
   const timeElapsed = endTime - startTime;
   return millisToMinutesAndSeconds(timeElapsed);
 };
+exports.getAllLinks = getAllLinks;
 
 exports.reloadOffers = async (req, res) => {
   const startTime = Date.now();

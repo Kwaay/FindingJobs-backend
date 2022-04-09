@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "p7-groupomania",
-    "description": "API du projet 7 fait sous NodeJS",
+    "title": "findingjobs",
+    "description": "API de FindingJobs",
     "contact": {
       "name": "DUMONT Benoit",
       "email": "benoit.dum74@gmail.com"
@@ -32,8 +32,8 @@
       "description": "The set of routes for the job"
     },
     {
-      "name": "waitlist",
-      "description": "The set of routes for the waitlist"
+      "name": "process",
+      "description": "The set of routes for processes"
     }
   ],
   "paths": {
@@ -1900,9 +1900,9 @@
         }
       }
     },
-    "/api/waitlist": {
+    "/api/process": {
       "get": {
-        "tags": ["waitlist"],
+        "tags": ["process"],
         "description": "",
         "security": [
           {
@@ -1929,9 +1929,9 @@
         }
       }
     },
-    "/api/waitlist/crawl": {
+    "/api/process/crawl": {
       "get": {
-        "tags": ["waitlist"],
+        "tags": ["process"],
         "description": "",
         "security": [
           {
@@ -1949,6 +1949,93 @@
                     "message": {
                       "type": "string",
                       "example": "✅ - Crawl successfully completed in XXmXX"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wttj/reload": {
+      "get": {
+        "tags": ["process"],
+        "description": "",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "⌚ - Time elapsed : XX:XX"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pe/reload": {
+      "get": {
+        "tags": ["process"],
+        "description": "",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "⌚ - Time elapsed : XX:XX"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/monster/reload": {
+      "get": {
+        "tags": ["process"],
+        "description": "",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "⌚ - Time elapsed : XX:XX"
                     }
                   }
                 }

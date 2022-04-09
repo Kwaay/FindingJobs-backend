@@ -3,7 +3,7 @@ const path = require('path');
 const useragent = require('express-useragent');
 
 // Récupération des routes
-const processWaitListRoutes = require('./routes/waitlist');
+const processRoutes = require('./routes/waitlist');
 const wttjRoutes = require('./routes/welcometothejungle');
 const peRoutes = require('./routes/pole-emploi');
 const monsterRoutes = require('./routes/monster');
@@ -39,7 +39,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 // Base URL pour les routes
 app.use('/api/user', userRoutes);
 app.use('/api/job', jobRoutes);
-app.use('/api/waitlist', processWaitListRoutes);
+app.use('/api/process', processRoutes);
 app.use('/api/wttj', wttjRoutes);
 app.use('/api/pe', peRoutes);
 app.use('/api/monster', monsterRoutes);
