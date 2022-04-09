@@ -24,6 +24,14 @@ module.exports = (Sequelize, DataTypes) =>
         type: DataTypes.STRING,
         allowNull: false,
       },
+      logo: {
+        type: DataTypes.STRING.BINARY,
+        allowNull: false,
+      },
+      visibility: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
     },
     {
       tableName: 'stack',

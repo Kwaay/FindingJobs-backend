@@ -2207,6 +2207,13 @@
           },
           "regex": {
             "type": "string"
+          },
+          "logo": {
+            "type": "string",
+            "format": "binary"
+          },
+          "visibility": {
+            "type": "boolean"
           }
         }
       },
@@ -2224,6 +2231,13 @@
           },
           "regex": {
             "type": "string"
+          },
+          "logo": {
+            "type": "string",
+            "format": "binary"
+          },
+          "visibility": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",

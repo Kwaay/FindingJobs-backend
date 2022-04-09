@@ -32,6 +32,10 @@ module.exports = (Sequelize, DataTypes) =>
         type: DataTypes.STRING,
         allowNull: false,
       },
+      avatar: {
+        type: DataTypes.STRING.BINARY,
+        allowNull: true,
+      },
       rank: {
         type: DataTypes.INTEGER,
         allowNull: false,

@@ -7,8 +7,6 @@ const MIME_TYPES = {
   'image/png': 'png',
   'image/bmp': 'bmp',
   'image/svg': 'svg',
-  'video/mp4': 'mp4',
-  'video/avi': 'avi',
   'image/gif': 'gif',
 };
 /**
@@ -45,5 +43,5 @@ module.exports = multer({
   },
 }).fields([
   { name: 'avatar', maxCount: 1 },
-  { name: 'media', maxCount: 1 },
+  { name: 'image', maxCount: 1 },
 ]);
