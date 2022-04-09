@@ -2,7 +2,7 @@ const express = require('express');
 const PECtrl = require('../controllers/pole-emploi');
 const WTTJCtrl = require('../controllers/welcometothejungle');
 const monsterCtrl = require('../controllers/monster');
-const processWaitListCtrl = require('../controllers/processWaitList');
+const processWaitListCtrl = require('../controllers/waitlist');
 
 processWaitListCtrl.addController(PECtrl);
 processWaitListCtrl.addController(WTTJCtrl);

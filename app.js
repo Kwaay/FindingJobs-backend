@@ -3,7 +3,7 @@ const path = require('path');
 const useragent = require('express-useragent');
 
 // Récupération des routes
-const processWaitListRoutes = require('./routes/processWaitList');
+const processWaitListRoutes = require('./routes/waitlist');
 const wttjRoutes = require('./routes/welcometothejungle');
 const peRoutes = require('./routes/pole-emploi');
 const monsterRoutes = require('./routes/monster');

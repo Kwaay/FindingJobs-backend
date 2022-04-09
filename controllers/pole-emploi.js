@@ -36,7 +36,7 @@ function moreBtn(page) {
   });
 }
 
-async function crawlResults(browser, URL) {
+const crawlResults = async (browser, URL) => {
   console.log('🚀 - Launching PE Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
@@ -88,7 +88,8 @@ async function crawlResults(browser, URL) {
     );
   }, 5000);
   return true;
-}
+};
+exports.crawlResults = crawlResults;
 
 async function findStacks(HTML) {
   const stacks = await Stack.findAll({});
@@ -227,14 +228,6 @@ exports.getAllLinks = async () => {
   );
 
   await browser.close();
-  const endTime = Date.now();
-  const timeElapsed = endTime - startTime;
-  return timeElapsed;
-};
-exports.findData = async () => {
-  const startTime = Date.now();
-  const browser = await getBrowser();
-  await getData(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   return timeElapsed;
