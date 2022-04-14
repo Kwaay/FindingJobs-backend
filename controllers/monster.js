@@ -58,8 +58,9 @@ async function crawlResults(browser, URL) {
   console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
-  const userAgent = await UserAgent.findOne({ where: { id: 1 } });
+  const userAgent = await UserAgent.findOne();
   if (!userAgent) {
+    console.log(`❌ - UserAgent not found`);
     return '404 - UserAgent not found';
   }
   const userAgentSource = JSON.stringify(userAgent.useragent);
@@ -116,7 +117,7 @@ async function crawlResults(browser, URL) {
 }
 
 async function findStacks(HTML) {
-  const stacks = await Stack.findAll({});
+  const stacks = await Stack.findAll({ where: { visibility: true } });
   const presentStacks = [];
   stacks.forEach(async (stack) => {
     const regex = new RegExp(stack.regex, 'gmi');

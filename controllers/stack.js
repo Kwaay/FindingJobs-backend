@@ -1,3 +1,4 @@
+const fsp = require('fs/promises');
 const { Stack } = require('../models');
 
 // eslint-disable-next-line operator-linebreak
@@ -38,6 +39,9 @@ exports.createStack = async (req, res) => {
       name: req.body.name,
       type: req.body.type,
       regex: req.body.regex,
+      logo: `${req.protocol}://${req.get('host')}/images/${
+        req.files.logo[0].filename
+      }`,
     });
     if (stackCreation) {
       return res.status(201).json({ message: 'Stack Created' });
@@ -72,8 +76,8 @@ exports.getOneStack = async (req, res) => {
 };
 
 exports.updateOneStack = async (req, res) => {
-  const stackFind = await Stack.findOne({ where: { id: req.params.StackId } });
-  if (!stackFind) {
+  const stack = await Stack.findOne({ where: { id: req.params.StackId } });
+  if (!stack) {
     return res.status(404).json({ message: 'Stack not found' });
   }
   // Vérification du format du contenu envoyé
@@ -90,7 +94,21 @@ exports.updateOneStack = async (req, res) => {
       }
     }
     let stackObject = {};
-    stackObject = { ...req.body };
+    if (req.files) {
+      stackObject = {
+        ...JSON.stringify(req.body),
+        logo: `${req.protocol}://${req.get('host')}/images/${
+          req.files.logo[0].filename
+        }`,
+      };
+      const filename = stack.logo.split('/images/')[1];
+      if (filename !== undefined && filename !== null) {
+        await fsp.unlink(`./images/${filename}`);
+      }
+    } else {
+      stackObject = { ...req.body };
+    }
+
     const updateStack = await Stack.update(
       { ...stackObject },
       { where: { id: req.params.StackId } },

@@ -91,7 +91,7 @@ async function crawlResults(browser, URL) {
 }
 
 async function findStacks(HTML) {
-  const stacks = await Stack.findAll({});
+  const stacks = await Stack.findAll({ where: { visibility: true } });
   const presentStacks = [];
   stacks.forEach(async (stack) => {
     const regex = new RegExp(stack.regex, 'gmi');
