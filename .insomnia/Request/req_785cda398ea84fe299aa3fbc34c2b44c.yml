@@ -1,0 +1,31 @@
+_id: req_785cda398ea84fe299aa3fbc34c2b44c
+type: Request
+parentId: fld_b45533a51ea5404787899909f3f2f2c3
+modified: 1649435858736
+created: 1649435858736
+url: "{{ base_url }}/api/reaction/{{ reactionId }}"
+name: /api/reaction/{reactionId}
+description: ""
+method: PUT
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "type": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638542411511
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

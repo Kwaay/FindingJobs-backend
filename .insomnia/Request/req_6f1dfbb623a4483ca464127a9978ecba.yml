@@ -1,0 +1,30 @@
+_id: req_6f1dfbb623a4483ca464127a9978ecba
+type: Request
+parentId: fld_b3db4cc98bdb400e82892e60f03218bb
+modified: 1649435858681
+created: 1649435858681
+url: "{{ base_url }}/api/user/forgot/modify"
+name: /api/user/forgot/modify
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "email": "user@example.com",
+      "reponse": "string",
+      "password": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication: {}
+metaSortKey: -1642007338372
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

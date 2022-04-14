@@ -1,0 +1,28 @@
+_id: req_b02ada1f30134b408e42477c84c5998b
+type: Request
+parentId: fld_07a303ff43af46a49d512110cc802403
+modified: 1649435858715
+created: 1649435858715
+url: "{{ base_url }}/api/user/login"
+name: /api/user/login
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: "null"
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638460075082
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

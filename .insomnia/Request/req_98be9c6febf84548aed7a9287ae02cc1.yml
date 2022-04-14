@@ -1,0 +1,37 @@
+_id: req_98be9c6febf84548aed7a9287ae02cc1
+type: Request
+parentId: fld_07a303ff43af46a49d512110cc802403
+modified: 1649435858723
+created: 1649435858723
+url: "{{ base_url }}/api/user/signup"
+name: /api/user/signup
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "nom": "string",
+      "prenom": "string",
+      "username": "string",
+      "email": "user@example.com",
+      "password": "string",
+      "avatar": {}
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+    id: pair_0b20152e3fa34d5280730ed627d94351
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638460075218
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

@@ -1,0 +1,24 @@
+_id: req_12a9eaa9629141ea8363d5a810f4c07f
+type: Request
+parentId: fld_67c0650e683f485d9ebc9aa6c5213f98
+modified: 1649435858781
+created: 1649435858781
+url: "{{ base_url }}/api/token/{{ tokenId }}"
+name: /api/token/{tokenId}
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1642007338092
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

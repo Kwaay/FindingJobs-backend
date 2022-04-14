@@ -1,0 +1,24 @@
+_id: req_11008dc18067449389b8dccbd42dee30
+type: Request
+parentId: fld_b3db4cc98bdb400e82892e60f03218bb
+modified: 1649435858668
+created: 1649435858668
+url: "{{ base_url }}/api/user/{{ userId }}"
+name: /api/user/{userId}
+description: ""
+method: DELETE
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638542411780
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

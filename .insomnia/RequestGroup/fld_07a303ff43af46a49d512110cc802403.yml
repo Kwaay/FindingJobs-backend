@@ -1,0 +1,10 @@
+_id: fld_07a303ff43af46a49d512110cc802403
+type: RequestGroup
+parentId: wrk_772697e406db432ca23d92b260637931
+modified: 1649435858710
+created: 1649435858710
+name: auth
+description: Used for signup and login
+environment: {}
+environmentPropertyOrder: null
+metaSortKey: -1638460075716

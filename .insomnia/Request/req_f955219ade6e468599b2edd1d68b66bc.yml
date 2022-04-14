@@ -1,0 +1,40 @@
+_id: req_f955219ade6e468599b2edd1d68b66bc
+type: Request
+parentId: fld_b3db4cc98bdb400e82892e60f03218bb
+modified: 1649435858696
+created: 1649435858696
+url: "{{ base_url }}/api/user/{{ UserId }}"
+name: /api/user/{UserId}
+description: ""
+method: PATCH
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "name": "string",
+      "firstname": "string",
+      "username": "string",
+      "email": "user@example.com",
+      "password": "string",
+      "avatar": "string",
+      "maxSecurity": true,
+      "rank": 0,
+      "question": "string",
+      "reponse": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1643479310081
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

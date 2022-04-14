@@ -1,0 +1,24 @@
+_id: req_d98177b4206b407d9ec171e87a12acfc
+type: Request
+parentId: fld_eb1963cb7f4d459c915fe09afeb79eb2
+modified: 1649435858814
+created: 1649435858814
+url: "{{ base_url }}/api/comment/{{ CommentId }}"
+name: /api/comment/{CommentId}
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1643479310000
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

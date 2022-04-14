@@ -1,0 +1,31 @@
+_id: req_bb89b6ed929a47709766570d505ec8ff
+type: Request
+parentId: fld_b45533a51ea5404787899909f3f2f2c3
+modified: 1649435858760
+created: 1649435858760
+url: "{{ base_url }}/api/reaction/{{ ReactionId }}"
+name: /api/reaction/{ReactionId}
+description: ""
+method: PATCH
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "type": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1643479310038
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

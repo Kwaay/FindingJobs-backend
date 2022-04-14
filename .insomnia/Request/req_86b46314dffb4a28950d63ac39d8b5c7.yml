@@ -1,0 +1,38 @@
+_id: req_86b46314dffb4a28950d63ac39d8b5c7
+type: Request
+parentId: fld_b3db4cc98bdb400e82892e60f03218bb
+modified: 1649435858650
+created: 1649435858650
+url: "{{ base_url }}/api/user/:id"
+name: /api/user/:id
+description: ""
+method: GET
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "id": 0,
+      "nom": "string",
+      "prenom": "string",
+      "username": "string",
+      "email": "user@example.com",
+      "password": "string",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638460074702
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

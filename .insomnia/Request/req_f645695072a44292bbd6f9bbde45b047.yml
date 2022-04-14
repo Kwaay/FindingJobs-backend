@@ -1,0 +1,24 @@
+_id: req_f645695072a44292bbd6f9bbde45b047
+type: Request
+parentId: fld_eb1963cb7f4d459c915fe09afeb79eb2
+modified: 1649435858803
+created: 1649435858803
+url: "{{ base_url }}/api/comment/{{ CommentId }}"
+name: /api/comment/{CommentId}
+description: ""
+method: DELETE
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1643479309985
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

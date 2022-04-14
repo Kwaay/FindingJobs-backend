@@ -1,0 +1,24 @@
+_id: req_aa55253be5254dcea4a6952d2c7f28c2
+type: Request
+parentId: fld_b45533a51ea5404787899909f3f2f2c3
+modified: 1649435858731
+created: 1649435858731
+url: "{{ base_url }}/api/reaction/{{ reactionId }}"
+name: /api/reaction/{reactionId}
+description: ""
+method: DELETE
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638542411464
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

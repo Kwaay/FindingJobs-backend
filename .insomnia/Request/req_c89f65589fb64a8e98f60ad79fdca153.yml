@@ -1,0 +1,40 @@
+_id: req_c89f65589fb64a8e98f60ad79fdca153
+type: Request
+parentId: fld_8ea45d211a4d47378ef5fd3d525b7f99
+modified: 1649435858432
+created: 1649435858432
+url: "{{ base_url }}/api/post"
+name: /api/post
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "id": 0,
+      "message": "string",
+      "reaction": [
+        {
+          "user_id": 0,
+          "post_id": 0,
+          "id": 0,
+          "type": "string"
+        }
+      ]
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638460074572
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

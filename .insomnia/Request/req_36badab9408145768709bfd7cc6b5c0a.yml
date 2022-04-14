@@ -1,0 +1,31 @@
+_id: req_36badab9408145768709bfd7cc6b5c0a
+type: Request
+parentId: fld_8ea45d211a4d47378ef5fd3d525b7f99
+modified: 1649435858453
+created: 1649435858453
+url: "{{ base_url }}/api/post/{{ postId }}"
+name: /api/post/{postId}
+description: ""
+method: PUT
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "content": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638542411568
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

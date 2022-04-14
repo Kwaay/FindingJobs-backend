@@ -1,0 +1,35 @@
+_id: req_1e496f4c64bf44a09148ead1d48d655c
+type: Request
+parentId: fld_b3db4cc98bdb400e82892e60f03218bb
+modified: 1649435858672
+created: 1649435858672
+url: "{{ base_url }}/api/user/{{ userId }}"
+name: /api/user/{userId}
+description: ""
+method: PUT
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "name": "string",
+      "firstname": "string",
+      "username": "string",
+      "email": "user@example.com",
+      "password": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1638542411820
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

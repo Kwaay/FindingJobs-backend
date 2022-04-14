@@ -1,0 +1,31 @@
+_id: req_4801591d0ec74af3b0e9e4f08efc3d43
+type: Request
+parentId: fld_eb1963cb7f4d459c915fe09afeb79eb2
+modified: 1649435858809
+created: 1649435858809
+url: "{{ base_url }}/api/comment/{{ CommentId }}"
+name: /api/comment/{CommentId}
+description: ""
+method: PATCH
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "content": "string"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1643479309995
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

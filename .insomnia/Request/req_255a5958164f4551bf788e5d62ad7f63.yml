@@ -1,0 +1,24 @@
+_id: req_255a5958164f4551bf788e5d62ad7f63
+type: Request
+parentId: fld_b45533a51ea5404787899909f3f2f2c3
+modified: 1649435858765
+created: 1649435858765
+url: "{{ base_url }}/api/reaction/{{ ReactionId }}"
+name: /api/reaction/{ReactionId}
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: bearer
+  token: "{{bearerToken}}"
+  prefix: ""
+metaSortKey: -1643479310042
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
