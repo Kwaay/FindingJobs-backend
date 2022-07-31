@@ -18,7 +18,7 @@
     "jsonwebtoken": "^8.5.1",
     "multer": "^1.4.4",
     "mysql2": "^2.3.3",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^3.2.10",
     "puppeteer": "^13.4.1",
     "sequelize": "^6.17.0",
     "sequelize-noupdate-attributes": "^1.0.0",
