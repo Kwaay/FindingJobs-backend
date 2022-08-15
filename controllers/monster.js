@@ -9,54 +9,78 @@ const regexContract =
 const regexSalary = /((?:€[\d /-]+)+Par (?:jour|an|mois))/gim;
 const regexType = /(?:Temps[ ](?:(Plein|Partiel)))/gim;
 // eslint-enable operator-linebreak */
-
 const temporaryWaitList = [];
 /* eslint no-console: ["error", { allow: ["log"] }] */
 
 exports.applyTo = async (item) => (await item.origin) === 'Monster';
 
-async function moreBtn(page) {
+async function autoScroll(page, iterations) {
+  console.log('autoScroll', iterations);
+  if (iterations !== 1) {
+    await page.evaluate(async () => {
+      await new Promise((resolve) => {
+        let totalHeight = 0;
+        const distance = 30;
+        const timer = setInterval(() => {
+          const height = Number(document.body.scrollHeight / 10);
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+          if (totalHeight >= height) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
+    });
+  } else {
+    await page.evaluate(async () => {
+      await new Promise((resolve) => {
+        let totalHeight = 0;
+        const distance = 30;
+        const timer = setInterval(() => {
+          const { scrollHeight } = document.body;
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+          if (totalHeight >= scrollHeight) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
+    });
+  }
+}
+
+async function moreBtn(page, iterations) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     const hasMoreButton = await page.evaluate(() => {
       const moreBtnSelect = document.querySelector(
-        'main > div > nav > section > div > div > div > div > div > button',
+        'html body div#__next div main div nav section button.sc-eCImPb.dVaZLw.ds-button',
       );
-      if (moreBtnSelect.innerText !== 'Fin des résultats') {
-        moreBtnSelect.click();
-        return true;
+      if (moreBtnSelect) {
+        if (moreBtnSelect.innerText !== 'Fin des résultats') {
+          moreBtnSelect.click();
+          return true;
+        }
+        return false;
       }
       return false;
     });
-    if (hasMoreButton === true) {
-      await moreBtn(page);
+    if (hasMoreButton) {
+      await autoScroll(page, iterations + 1);
+      await moreBtn(page, iterations + 1);
     }
+
     resolve();
-  });
-}
-
-async function autoScroll(page) {
-  await page.evaluate(async () => {
-    await new Promise((resolve) => {
-      let totalHeight = 0;
-      const distance = 20;
-      const timer = setInterval(() => {
-        const { scrollHeight } = document.body;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
-
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, 100);
-    });
   });
 }
 
 async function crawlResults(browser, URL) {
   console.log('🚀 - Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
+  // eslint-disable-next-line prefer-const
+  let iterations = 1;
   const page = await browser.newPage();
   const userAgent = await UserAgent.findOne();
   if (!userAgent) {
@@ -72,10 +96,11 @@ async function crawlResults(browser, URL) {
   });
   console.log('✅ - Network idling');
   console.log('⚠️ - Waiting for auto scroll');
-  await autoScroll(page);
+  console.log('crawlResults', iterations);
+  await autoScroll(page, iterations);
   console.log('✅ - Auto scroll complete');
   console.log('⚠️ - Checking for buttons to load all jobs');
-  await moreBtn(page);
+  await moreBtn(page, iterations);
   console.log('✅ - All jobs loaded');
   const links = await page.evaluate(() => {
     const elements = Array.from(
@@ -150,9 +175,10 @@ const getHTML = (browser, URL) =>
     });
     const content = await page.evaluate(async () => {
       const paragraph = document.querySelector(
-        'html body div#__next div div div div div div div.jobview-containerstyles__JobInformation-sc-16af7k7-4.impbxn',
+        '.jobview-containerstyles__JobViewWrapper-sc-16af7k7-1',
       );
       if (paragraph) {
+        console.log({ paragraph });
         return paragraph.innerText.replace(/\s/g, ' ');
       }
       return 'Non-indiqué';
@@ -229,7 +255,7 @@ const getAllLinks = async () => {
     browser,
     'https://www.monster.fr/emploi/recherche?q=D%C3%A9veloppeur&where=&page=1',
   );
-  await browser.close();
+  // await browser.close();
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   return timeElapsed;

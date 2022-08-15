@@ -5,7 +5,6 @@ const { WaitList } = require('../models');
 const { getBrowser } = require('../browser');
 
 const controllers = [];
-
 function millisToMinutesAndSeconds(millis) {
   const minutes = Math.floor(millis / 60000);
   const seconds = ((millis % 60000) / 1000).toFixed(0);
@@ -21,6 +20,11 @@ exports.crawl = async (req, res) => {
   }
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
+  console.log(
+    `✅ - Crawl successfully completed in ${millisToMinutesAndSeconds(
+      timeElapsed,
+    )}`,
+  );
   return res.status(200).json({
     message: `✅ - Crawl successfully completed in ${millisToMinutesAndSeconds(
       timeElapsed,
@@ -34,6 +38,7 @@ async function processLinks(browser, iterations = 1) {
     console.log(`⚠️ - Processing links #${iterations}`);
     const waitList = await WaitList.findAll({
       limit: 10,
+      where: { origin: 'PE' },
     });
     if (!waitList) {
       console.log(`🎉 - WaitList successfully proceded`);
@@ -42,6 +47,7 @@ async function processLinks(browser, iterations = 1) {
     const promises = [];
     for (const item of waitList) {
       for (const ctrl of controllers) {
+        console.log(await ctrl.applyTo(item), item);
         if (await ctrl.applyTo(item)) {
           await promises.push(ctrl.getHTML(browser, item.url));
           await WaitList.destroy({ where: { id: item.id } });
@@ -62,6 +68,12 @@ exports.selectControllers = async (req, res) => {
   await processLinks(browser);
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
+  await browser.close();
+  console.log(
+    `✅ - WaitList successfully proceded in ${millisToMinutesAndSeconds(
+      timeElapsed,
+    )}`,
+  );
   return res.status(200).json({
     message: `✅ - WaitList successfully proceded in ${millisToMinutesAndSeconds(
       timeElapsed,

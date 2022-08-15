@@ -4,5 +4,5 @@ exports.getBrowser = async () =>
   // eslint-disable-next-line no-return-await
   await puppeteer.launch({
     headless: false,
-    args: ['--no-sandbox', '--single-process'],
+    args: ['--no-sandbox'],
   });

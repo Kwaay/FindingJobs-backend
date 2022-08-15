@@ -5,12 +5,12 @@ const { getBrowser } = require('../browser');
 const { WaitList, Stack, Job, UserAgent } = require('../models');
 
 const regexContract =
-  /Cont(?:rat)?[ .-]+(?:(?:à)|(?: durée (?:in)?déterminée))+(?: - (?:\d)+ (?:mois|an[s]?))?/gim;
+  /((?:Contrat [à])|(?:Mission intérimaire))(?:[- ]+)(|(?:durée (?:in)?déterminée)?)+((?: - )?(?:\d)+ ?(?:Jour(\(s\))|mois|an[s]?))?/gim;
 const regexStudy =
   /(?:Bac[ ]?\+\d(?:[,]? )?)+(?:(?:et|ou)(?: plus ou)? équivalents(?: [a-z]+)?)?/gim;
-const regexType = /(?:[0-9][0-9]H[0-9]?[0-9]?)/gim;
+const regexType = /(?:[0-9][0-9]H[0-9]?[0-9]? (Horaires normaux))/gim;
 const regexSalary =
-  /((?:Annuel |Mensuel )de [\d,]+ Euros(?: à [\d,]+ Euros)? sur [\d.,]+(?: mois| an[s]?))/gim;
+  /((?:Primes)|(?:((?:a|à) n(?:é|e)gocier))|(?:Selon ((?:le |l'|votre )?(?:exp(?:e|é)rience(?:s)?|profil|(?:â|a)ge| formation | niveau d'(?:e|é)tudes|dipl(?:o|ô)me|comp(?:é|e)tence(s)?)(?: ou| et| \+|\/)?(?: exp(?:e|é)rience| profil| (?:a|â)ge| formation| niveau d'(?:e|é)tudes| dipl(?:o|ô)me|comp(?:é|e)tence(?:s)?)?))|(?:[\d,]+ (?:€|Euros)(?: à [\d,]+ (?:€|Euros))?))/gim;
 // eslint-enable operator-linebreak */
 
 const temporaryWaitList = [];
@@ -94,7 +94,7 @@ async function findStacks(HTML) {
   const stacks = await Stack.findAll({ where: { visibility: true } });
   const presentStacks = [];
   stacks.forEach(async (stack) => {
-    const regex = new RegExp(stack.regex, 'gmi');
+    const regex = new RegExp(stack.regex, 'gm');
     const search = regex.test(HTML);
     if (search) {
       presentStacks.push(stack);

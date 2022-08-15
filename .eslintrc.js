@@ -16,6 +16,7 @@ module.exports = {
     'airbnb-base',
     'plugin:jsdoc/recommended',
     'plugin:prettier/recommended',
+    'prettier',
   ],
   plugins: ['prettier', 'jsdoc'],
   // add your custom rules here

@@ -8,7 +8,10 @@ const regexName =
 exports.getAllStacks = async (req, res) => {
   try {
     const findAllStacks = await Stack.findAll({
-      order: [['createdAt', 'ASC']],
+      order: [['type']],
+      where: {
+        visibility: true,
+      },
     });
     if (findAllStacks) {
       return res.status(200).json(findAllStacks);
@@ -60,6 +63,7 @@ exports.getOneStack = async (req, res) => {
     const findOneStack = await Stack.findOne({
       where: {
         id: req.params.StackId,
+        visibility: true,
       },
     });
     if (findOneStack) {

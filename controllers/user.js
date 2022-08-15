@@ -48,6 +48,7 @@ exports.signup = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashPassword = await bcrypt.hash(req.body.password, salt);
   if (req.files) {
+    console.log(req.files);
     const userCreationWithAvatar = await User.create({
       avatar: `${req.protocol}://${req.get('host')}/images/${
         req.files.avatar[0].filename
@@ -359,7 +360,7 @@ exports.createUser = async (req, res) => {
   return false;
 };
 exports.getMyUser = async (req, res) => {
-  const user = await User.findOne({ id: req.token.UserId });
+  const user = await User.findOne({ where: { id: req.token.UserId } });
   if (!user) {
     return res.status(404).json({ message: "User doesn't exist" });
   }

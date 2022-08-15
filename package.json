@@ -19,6 +19,7 @@
     "multer": "^1.4.4",
     "mysql2": "^2.3.3",
     "node-fetch": "^2.6.7",
+    "nodemon": "^2.0.16",
     "puppeteer": "^13.4.1",
     "sequelize": "^6.17.0",
     "sequelize-noupdate-attributes": "^1.0.0",

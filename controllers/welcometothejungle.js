@@ -14,8 +14,7 @@ const regexExperience =
   /([><][ .-]?[0-9]?[ .-]?[0-9]?[ .-]?an[s]?|[><][ .-]?[0-9]?[ .-]?[0-9]?[ .-]?mois)/gim;
 const regexRemote =
   /(Télétravail[ .-]?ponctuel[ .-]?autorisé|Télétravail[ .-]?partiel[ .-]? possible|Télétravail[ .-]?total[ .-]?possible)/gim;
-const regexSalary =
-  /(Salaire[ .-]?entre[ .-]?[0-9]?[0-9]?[,]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[e]?[t]?[ .-]?[0-9]?[0-9]?[,]?[0-9]?[0-9]?[KM]?[ .-]?[€]?[ .-]?[/]?[ .-]?(?:mois)?(?:jour)?|Salaire[ .-]?[:]?[ .-]?[0-9]?[ ,.-]?[0-9]?[ .-]?[0-9][KM]?[ .-]?[€]?[ .-]?[/]?[ .-]?(?:mois)?(?:jour)?)/gim;
+const regexSalary = /([\d]+(K)? €(?: et )?([\d]+K €)?)/gm;
 // eslint-enable operator-linebreak */
 
 const temporaryWaitList = [];
@@ -154,6 +153,7 @@ const getHTML = (browser, URL) =>
     const remote = (splitExp.match(regexRemote) || ['Non-indiqué'])[0];
     const splitRemote = splitExp.split(remote).join('');
     const salary = (splitRemote.match(regexSalary) || ['Non-indiqué'])[0];
+    console.log(salary);
     const splitSalary = splitRemote.split(salary).join('');
     const location = splitSalary.trim() || 'Non-indiqué';
     const content = await page.evaluate(async () => {

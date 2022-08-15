@@ -16,7 +16,7 @@ exports.getAllJobs = async (req, res) => {
 exports.getAllJobsLast7Days = async (req, res) => {
   try {
     const datetime = new Date();
-    datetime.setDate(datetime.getDate() - 1);
+    datetime.setDate(datetime.getDate() - 7);
     const format = datetime
       .toISOString()
       .replace('Z', '')
