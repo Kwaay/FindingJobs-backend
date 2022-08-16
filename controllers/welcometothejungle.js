@@ -2,7 +2,7 @@
 const striptags = require('striptags');
 const { getBrowser } = require('../browser');
 
-const { WaitList, Stack, Job } = require('../models');
+const { WaitList, Stack, Job, UserAgent } = require('../models');
 
 const regexContract =
   /((Temps?[ .-]?Partiel?|Autres|BEP|CAP|CDI|CDD|Freelance|Alternance|Stage)[ .-/]?([ .-/]?[ .-/]?(?:Temporaire)?[ .-]?)(\((.*)\))?)/gim;
@@ -42,24 +42,34 @@ async function autoScroll(page) {
   });
 }
 
-async function crawlResults(browser, URL, iterations = 1) {
+async function crawlResults(browser, URL, paging, iterations = 1) {
   if (iterations === 1) {
     console.log('⏱️ - Launching Parse Welcome to the Jungle Results');
   }
-  // eslint-disable-next-line no-async-promise-executor
+  console.log(paging);
+  // eslint-disable-next-line no-async-promise-executor, consistent-return
   return new Promise(async (resolve) => {
     console.log(`⚠️ - Fetching results from page #${iterations}`);
-    const page = await browser.newPage();
-    await page.goto(URL);
+    const userAgent = await UserAgent.findOne({ where: { id: 1 } });
+    if (!userAgent) {
+      // eslint-disable-next-line no-promise-executor-return
+      return '404';
+    }
+
+    const userAgentSource = JSON.stringify(userAgent.useragent);
+    await paging.setUserAgent(userAgentSource);
+    await paging.goto(URL, {
+      timeout: 0,
+    });
     console.log('⏱️ - Waiting for Network idle');
     await new Promise((resolve2) => {
       setTimeout(resolve2, 10000);
     });
     console.log('✅ - Network idling');
     console.log('⏱️ - Waiting for scroll');
-    await autoScroll(page);
+    await autoScroll(paging);
     console.log('✅ - Page scroll complete');
-    const links = await page.evaluate(() => {
+    const links = await paging.evaluate(() => {
       const elements = Array.from(
         document.querySelectorAll('li > article > div > a'),
       );
@@ -87,14 +97,13 @@ async function crawlResults(browser, URL, iterations = 1) {
       });
       temporaryWaitList.push(nLink);
     });
-    const hasNextPage = await page.evaluate(async () => {
+    const hasNextPage = await paging.evaluate(async () => {
       const nextBtn = document.querySelector("a[aria-label='Next page'] ");
-      return nextBtn?.href;
+      return nextBtn.href;
     });
     if (hasNextPage) {
       console.log('⚠️ - Next page detected');
-      await page.close();
-      await crawlResults(browser, `${hasNextPage}`, iterations + 1);
+      await crawlResults(browser, `${hasNextPage}`, paging, iterations + 1);
     } else {
       console.log('🎉 - No more pages');
       setTimeout(() => {
@@ -226,9 +235,11 @@ exports.getData = getData;
 const getAllLinks = async () => {
   const startTime = Date.now();
   const browser = await getBrowser();
+  const page = await browser.newPage();
   await crawlResults(
     browser,
     `${baseURL}?aroundQuery=&attributesToRetrieve%5B0%5D=%2A&attributesToRetrieve%5B1%5D=-_geoloc&attributesToRetrieve%5B2%5D=-department&attributesToRetrieve%5B3%5D=-language&attributesToRetrieve%5B4%5D=-profession_name&attributesToRetrieve%5B5%5D=-profile&attributesToRetrieve%5B6%5D=-sectors&attributesToRetrieve%5B7%5D=-contract_type_names.en&attributesToRetrieve%5B8%5D=-organization.cover_image.en&attributesToRetrieve%5B9%5D=-organization.size.en&attributesToRetrieve%5B10%5D=-profession.category.en&attributesToRetrieve%5B11%5D=-profession.name.en&attributesToRetrieve%5B12%5D=-sectors_name.en&attributesToRetrieve%5B13%5D=-contract_type_names.es&attributesToRetrieve%5B14%5D=-organization.cover_image.es&attributesToRetrieve%5B15%5D=-organization.size.es&attributesToRetrieve%5B16%5D=-profession.category.es&attributesToRetrieve%5B17%5D=-profession.name.es&attributesToRetrieve%5B18%5D=-sectors_name.es&attributesToRetrieve%5B19%5D=-contract_type_names.cs&attributesToRetrieve%5B20%5D=-organization.cover_image.cs&attributesToRetrieve%5B21%5D=-organization.size.cs&attributesToRetrieve%5B22%5D=-profession.category.cs&attributesToRetrieve%5B23%5D=-profession.name.cs&attributesToRetrieve%5B24%5D=-sectors_name.cs&attributesToRetrieve%5B25%5D=-contract_type_names.sk&attributesToRetrieve%5B26%5D=-organization.cover_image.sk&attributesToRetrieve%5B27%5D=-organization.size.sk&attributesToRetrieve%5B28%5D=-profession.category.sk&attributesToRetrieve%5B29%5D=-profession.name.sk&attributesToRetrieve%5B30%5D=-sectors_name.sk&page=1&refinementList%5Bprofession_name.fr.Tech%5D%5B%5D=Dev%20Fullstack&refinementList%5Bprofession_name.fr.Tech%5D%5B%5D=Dev%20Backend&refinementList%5Bprofession_name.fr.Tech%5D%5B%5D=Dev%20Frontend&refinementList%5Bprofession_name.fr.Tech%5D%5B%5D=DevOps%20%2F%20Infra`,
+    page,
   );
   await browser.close();
   const endTime = Date.now();
