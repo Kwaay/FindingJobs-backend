@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 const sequelizeNoUpdateAttributes = require('sequelize-noupdate-attributes');
+const Logger = require('../lib/Logger');
 
 require('dotenv').config();
 
@@ -38,19 +39,19 @@ sequelize.UserAgent = userAgent;
 sequelize
   .authenticate()
   .then(() => {
-    console.log('✅ Connexion à MySQL valide');
+    Logger.success('Connexion à MySQL valide');
     // Synchronisation des models avec les tables dans la base de données
     sequelize
       .sync()
       .then(() => {
-        console.log('Tous les models ont été synchronisés avec succès.');
+        Logger.success('Tous les models ont été synchronisés avec succès.');
       })
       .catch(() => {
-        console.log('Impossible de synchroniser les models');
+        Logger.fail('Impossible de synchroniser les models');
       });
   })
   .catch((error) => {
-    console.log('❌ Connexion à MySQL invalide', error);
+    Logger.fail('Connexion à MySQL invalide', error);
   });
 
 module.exports = sequelize;

@@ -2,6 +2,7 @@
 const striptags = require('striptags');
 const { Op } = require('sequelize');
 const { getBrowser } = require('../browser');
+const Logger = require('../lib/Logger');
 
 const { WaitList, Stack, Job, UserAgent } = require('../models');
 
@@ -72,7 +73,7 @@ function moreBtn(page) {
 }
 
 async function crawlResults(browser, URL) {
-  console.log('🚀 - Launching PE Parsing');
+  Logger.start('Launching PE Parsing');
   deleteUnavailable();
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
@@ -83,14 +84,14 @@ async function crawlResults(browser, URL) {
   const userAgentSource = JSON.stringify(userAgent.useragent);
   await page.setUserAgent(userAgentSource);
   await page.goto(URL, { waitUntil: 'networkidle2' });
-  console.log('⏱️ - Waiting for Network idle');
+  Logger.wait('Waiting for Network idle');
   await new Promise((resolve2) => {
     setTimeout(resolve2, 10000);
   });
-  console.log('✅ - Network idling');
-  console.log('⚠️ - Checking for buttons to load all jobs');
+  Logger.success('Network idling');
+  Logger.wait('Checking for buttons to load all jobs');
   await moreBtn(page);
-  console.log('✅ - All jobs loaded');
+  Logger.success('✅ - All jobs loaded');
   const links = await page.evaluate(() => {
     const elements = Array.from(
       document.querySelectorAll('a[class="media with-fav"]'),
@@ -119,15 +120,12 @@ async function crawlResults(browser, URL) {
     temporaryWaitList.push(link);
   });
   setTimeout(() => {
-    console.log(
-      `✅ - Launching Parse PE with ${temporaryWaitList.length} results`,
-    );
+    Logger.end(`Launching Parse PE with ${temporaryWaitList.length} results`);
   }, 5000);
   return true;
 }
 
 async function findStacks(HTML) {
-  console.log('⚙️ - Stack launch');
   const stacks = await Stack.findAll({ where: { visibility: true } });
   const presentStacks = [];
   stacks.forEach(async (stack) => {
@@ -143,7 +141,7 @@ const getHTML = (browser, URL, res) =>
   // eslint-disable-next-line no-async-promise-executor , implicit-arrow-linebreak
   new Promise(async (resolve) => {
     const page = await browser.newPage();
-    console.log('⏱️ - Fetching page data');
+    Logger.wait('Fetching page data');
     const userAgent = await UserAgent.findOne({ where: { id: 1 } });
     if (!userAgent) {
       // eslint-disable-next-line no-promise-executor-return
@@ -196,7 +194,7 @@ const getHTML = (browser, URL, res) =>
     const splitSalary = splitType.split(salary).join('');
     const sContent = striptags(splitSalary).toLowerCase();
     await page.close();
-    console.log('✅ - Page data fetched');
+    Logger.success('Page data fetched');
     const presentStacks = await findStacks(sContent);
     const jobCreate = await Job.create({
       name,
@@ -250,7 +248,7 @@ const getData = async (browser, iterations = 1) => {
       await getData(browser, iterations + 1);
     }
     resolve();
-    console.log('🎉 - No more links');
+    Logger.end('No more links');
   });
 };
 exports.getData = getData;

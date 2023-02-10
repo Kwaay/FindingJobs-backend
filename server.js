@@ -1,5 +1,6 @@
 const http = require('http');
 const app = require('./app');
+const Logger = require('./lib/Logger');
 
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
@@ -26,11 +27,11 @@ const errorHandler = (error) => {
   const bind = typeof address === 'string' ? `pipe ${address}` : port;
   switch (error.code) {
     case 'EACCES':
-      console.error(`${bind} Pas de permissions.`);
+      Logger.error(`${bind} Pas de permissions.`);
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(`Port ${bind} déjà utilisé.`);
+      Logger.error(`Port ${bind} déjà utilisé.`);
       process.exit(1);
       break;
     default:
@@ -42,7 +43,7 @@ server.on('error', errorHandler);
 server.on('listening', () => {
   const address = server.address();
   const bind = typeof address === 'string' ? `pipe ${address}` : port;
-  console.log(`🔍 Port en cours d'utilisation: ${bind}`);
+  Logger.info(`Port en cours d'utilisation: ${bind}`);
 });
 
 server.listen(port);

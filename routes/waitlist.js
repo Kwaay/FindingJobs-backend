@@ -5,7 +5,7 @@ const monsterCtrl = require('../controllers/monster');
 const processWaitListCtrl = require('../controllers/waitlist');
 const auth = require('../middleware/auth');
 
-// processWaitListCtrl.addController(PECtrl);
+processWaitListCtrl.addController(PECtrl);
 processWaitListCtrl.addController(WTTJCtrl);
 // processWaitListCtrl.addController(monsterCtrl);
 

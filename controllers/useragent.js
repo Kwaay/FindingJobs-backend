@@ -1,5 +1,5 @@
 const { UserAgent } = require('../models');
-
+const Logger = require('../lib/Logger');
 // eslint-disable-next-line operator-linebreak
 
 exports.getUserAgent = async (req, res) => {
@@ -41,7 +41,6 @@ exports.createUserAgent = async (req, res) => {
 };
 
 exports.updateUserAgent = async (req, res) => {
-  console.log('UserAgent :', req.useragent.source);
   const userAgentFind = await UserAgent.findOne({ where: { id: 1 } });
   if (!userAgentFind) {
     return res.status(404).json({ message: 'userAgent not found' });

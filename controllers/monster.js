@@ -1,6 +1,7 @@
 /* eslint-disable operator-linebreak */
 const striptags = require('striptags');
 const { getBrowser } = require('../browser');
+const Logger = require('../lib/Logger');
 
 const { WaitList, Stack, Job, UserAgent } = require('../models');
 
@@ -15,7 +16,6 @@ const temporaryWaitList = [];
 exports.applyTo = async (item) => (await item.origin) === 'Monster';
 
 async function autoScroll(page, iterations) {
-  console.log('autoScroll', iterations);
   if (iterations !== 1) {
     await page.evaluate(async () => {
       await new Promise((resolve) => {
@@ -77,31 +77,30 @@ async function moreBtn(page, iterations) {
 }
 
 async function crawlResults(browser, URL) {
-  console.log('🚀 - Launching Monster Parsing');
+  Logger.start('Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   // eslint-disable-next-line prefer-const
   let iterations = 1;
   const page = await browser.newPage();
   const userAgent = await UserAgent.findOne();
   if (!userAgent) {
-    console.log(`❌ - UserAgent not found`);
+    Logger.fail(`UserAgent not found`);
     return '404 - UserAgent not found';
   }
   const userAgentSource = JSON.stringify(userAgent.useragent);
   await page.setUserAgent(userAgentSource);
   await page.goto(URL, { timeout: 0 });
-  console.log('⏱️ - Waiting for Network idle');
+  Logger.wait('Waiting for Network idle');
   await new Promise((resolve2) => {
     setTimeout(resolve2, 10000);
   });
-  console.log('✅ - Network idling');
-  console.log('⚠️ - Waiting for auto scroll');
-  console.log('crawlResults', iterations);
+  Logger.success('Network idling');
+  Logger.wait('Waiting for auto scroll');
   await autoScroll(page, iterations);
-  console.log('✅ - Auto scroll complete');
-  console.log('⚠️ - Checking for buttons to load all jobs');
+  Logger.success('Auto scroll complete');
+  Logger.wait(' Checking for buttons to load all jobs');
   await moreBtn(page, iterations);
-  console.log('✅ - All jobs loaded');
+  Logger.success('All jobs loaded');
   const links = await page.evaluate(() => {
     const elements = Array.from(
       document.querySelectorAll(
@@ -134,8 +133,8 @@ async function crawlResults(browser, URL) {
   });
   await browser.close();
   setTimeout(() => {
-    console.log(
-      `✅ - Monster Website Parsed with ${temporaryWaitList.length} results`,
+    Logger.end(
+      `Monster Website Parsed with ${temporaryWaitList.length} results`,
     );
   }, 5000);
   return true;
@@ -157,7 +156,7 @@ const getHTML = (browser, URL) =>
   // eslint-disable-next-line no-async-promise-executor , implicit-arrow-linebreak
   new Promise(async (resolve) => {
     const page = await browser.newPage();
-    console.log('⏱️ - Fetching page data');
+    Logger.wait('Fetching page data');
     await page.goto(URL, { timeout: 0 });
     const name = await page.evaluate(() => {
       const nameElement = document.querySelector('html body h1');
@@ -178,7 +177,6 @@ const getHTML = (browser, URL) =>
         '.jobview-containerstyles__JobViewWrapper-sc-16af7k7-1',
       );
       if (paragraph) {
-        console.log({ paragraph });
         return paragraph.innerText.replace(/\s/g, ' ');
       }
       return 'Non-indiqué';
@@ -191,7 +189,7 @@ const getHTML = (browser, URL) =>
     const splitType = splitSalary.split(type).join('');
     const sContent = striptags(splitType).toLowerCase();
     await page.close();
-    console.log('✅ - Page data fetched');
+    Logger.success('Page data fetched');
     const presentStacks = await findStacks(sContent);
     const jobCreate = await Job.create({
       name,
@@ -243,7 +241,7 @@ const getData = async (browser, iterations = 1) => {
       await getData(browser, iterations + 1);
     }
     resolve();
-    console.log('🎉 - No more links');
+    Logger.end('No more links');
   });
 };
 exports.getData = getData;

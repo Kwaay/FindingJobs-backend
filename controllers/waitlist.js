@@ -4,6 +4,7 @@
 const { Op } = require('sequelize');
 const { WaitList } = require('../models');
 const { getBrowser } = require('../browser');
+const Logger = require('../lib/Logger');
 
 const controllers = [];
 function millisToMinutesAndSeconds(millis) {
@@ -21,10 +22,8 @@ exports.crawl = async (req, res) => {
   }
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
-  console.log(
-    `✅ - Crawl successfully completed in ${millisToMinutesAndSeconds(
-      timeElapsed,
-    )}`,
+  Logger.end(
+    `Crawl successfully completed in ${millisToMinutesAndSeconds(timeElapsed)}`,
   );
   return res.status(200).json({
     message: `✅ - Crawl successfully completed in ${millisToMinutesAndSeconds(
@@ -36,13 +35,13 @@ exports.crawl = async (req, res) => {
 async function processLinks(browser, iterations = 1) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
-    console.log(`⚠️ - Processing links #${iterations}`);
+    Logger.info(`Processing links #${iterations}`);
     const waitList = await WaitList.findAll({
       limit: 15,
       where: { origin: { [Op.or]: ['WTTJ', 'PE'] } },
     });
     if (!waitList) {
-      console.log(`🎉 - WaitList successfully proceded`);
+      Logger.end(`WaitList successfully proceded`);
       return resolve();
     }
     const promises = [];
@@ -69,8 +68,8 @@ exports.selectControllers = async (req, res) => {
   const endTime = Date.now();
   const timeElapsed = endTime - startTime;
   await browser.close();
-  console.log(
-    `✅ - WaitList successfully proceded in ${millisToMinutesAndSeconds(
+  Logger.end(
+    `WaitList successfully proceded in ${millisToMinutesAndSeconds(
       timeElapsed,
     )}`,
   );

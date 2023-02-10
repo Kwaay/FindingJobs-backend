@@ -4,6 +4,7 @@ const cryptoJS = require('crypto-js');
 const fetch = require('node-fetch');
 const fsp = require('fs/promises');
 const { User } = require('../models');
+const Logger = require('../lib/Logger');
 
 const regexUsername =
   /^[a-zA-Z0-9àèìòùÀÈÌÒÙáéíóúýÁÉÍÓÚÝâêîôûÂÊÎÔÛãñõÃÑÕäëïöüÿÄËÏÖÜŸçÇßØøÅåÆæœ_-]{4,20}$/;
@@ -48,7 +49,6 @@ exports.signup = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashPassword = await bcrypt.hash(req.body.password, salt);
   if (req.files) {
-    console.log(req.files);
     const userCreationWithAvatar = await User.create({
       avatar: `${req.protocol}://${req.get('host')}/images/${
         req.files.avatar[0].filename

@@ -1,6 +1,7 @@
 /* eslint-disable operator-linebreak */
 const striptags = require('striptags');
 const { getBrowser } = require('../browser');
+const Logger = require('../lib/Logger');
 
 const { WaitList, Stack, Job, UserAgent } = require('../models');
 
@@ -45,11 +46,11 @@ async function autoScroll(page) {
 
 async function crawlResults(browser, URL, page, iterations = 1) {
   if (iterations === 1) {
-    console.log('⏱️ - Launching Parse Welcome to the Jungle Results');
+    Logger.start('Launching Parse Welcome to the Jungle Results');
   }
   // eslint-disable-next-line no-async-promise-executor, consistent-return
   return new Promise(async (resolve) => {
-    console.log(`🚧 - Fetching results from page #${iterations}`);
+    Logger.info(`Fetching results from page #${iterations}`);
     const userAgent = await UserAgent.findOne({ where: { id: 1 } });
     if (!userAgent) {
       // eslint-disable-next-line no-promise-executor-return
@@ -61,14 +62,14 @@ async function crawlResults(browser, URL, page, iterations = 1) {
     await page.goto(URL, {
       timeout: 0,
     });
-    console.log('⏱️ - Waiting for Network idle');
+    Logger.wait('Waiting for Network idle');
     await new Promise((resolve2) => {
       setTimeout(resolve2, 10000);
     });
-    console.log('✅ - Network idling');
-    console.log('⏱️ - Waiting for scroll');
+    Logger.success('Network idling');
+    Logger.wait('Waiting for scroll');
     await autoScroll(page);
-    console.log('✅ - Page scroll complete');
+    Logger.success('Page scroll complete');
     const links = await page.evaluate(() => {
       const elements = Array.from(
         document.querySelectorAll('li > article > div > a'),
@@ -103,7 +104,6 @@ async function crawlResults(browser, URL, page, iterations = 1) {
       );
       const listPage = activePage.parentElement;
       const nextPage = listPage.nextElementSibling;
-      console.log(activePage, listPage, nextPage);
       if (nextPage.innerText !== '') {
         const nextBtnSVG = document.querySelector(
           'nav[aria-label="Pagination"] svg[alt="Right"]',
@@ -118,13 +118,13 @@ async function crawlResults(browser, URL, page, iterations = 1) {
       return false;
     });
     if (hasNextPage) {
-      console.log('🚧 - Next page detected');
+      Logger.info('🚧 - Next page detected');
       await crawlResults(browser, `${hasNextPage}`, page, iterations + 1);
     } else {
-      console.log('🎉 - No more pages');
+      Logger.end('No more pages');
       setTimeout(() => {
-        console.log(
-          `✅ - Launching Parse Welcome to the Jungle Results with ${temporaryWaitList.length} results`,
+        Logger.end(
+          `Launching Parse Welcome to the Jungle Results with ${temporaryWaitList.length} results`,
         );
       }, 5000);
     }
@@ -149,7 +149,7 @@ const getHTML = (browser, URL) =>
   // eslint-disable-next-line no-async-promise-executor
   new Promise(async (resolve) => {
     const page = await browser.newPage();
-    console.log('⏱️ - Fetching page data');
+    Logger.wait('Fetching page data');
     await page.goto(URL, { timeout: 0 });
     const name = await page.evaluate(() => {
       const nameElement = document.querySelector('h1');
@@ -192,7 +192,7 @@ const getHTML = (browser, URL) =>
     });
     const sContent = striptags(content).toLowerCase();
     await page.close();
-    console.log('✅ - Page data fetched');
+    Logger.success('Page data fetched');
     const presentStacks = await findStacks(sContent);
     const jobCreate = await Job.create({
       name,
@@ -243,7 +243,7 @@ const getData = async (browser, iterations = 1) => {
       await getData(browser, iterations + 1);
     }
     resolve();
-    console.log('🎉 - No more links');
+    Logger.info('🎉 - No more links');
   });
 };
 exports.getData = getData;
