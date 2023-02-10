@@ -3,7 +3,7 @@ const { Stack } = require('../models');
 
 // eslint-disable-next-line operator-linebreak
 const regexName =
-  /^[0-9A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇßØÅÆa-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ/.# ]{1,25}$/;
+  /^[0-9A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇßØÅÆa-zàèìòùáéíóúýâêîôûãñõäëïöüÿçøåæœ/.#+ ]{1,25}$/;
 
 exports.getAllStacks = async (req, res) => {
   try {
@@ -37,6 +37,7 @@ exports.createStack = async (req, res) => {
   if (nameExist) {
     return res.status(409).json({ message: 'Name has already been used' });
   }
+  // TODO: Ajouter check visibility boolean
   try {
     const stackCreation = await Stack.create({
       name: req.body.name,
@@ -45,6 +46,7 @@ exports.createStack = async (req, res) => {
       logo: `${req.protocol}://${req.get('host')}/images/${
         req.files.logo[0].filename
       }`,
+      visibility: req.body.visibility,
     });
     if (stackCreation) {
       return res.status(201).json({ message: 'Stack Created' });

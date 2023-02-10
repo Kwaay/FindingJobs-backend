@@ -1,5 +1,6 @@
 /* eslint-disable operator-linebreak */
 const striptags = require('striptags');
+const { Op } = require('sequelize');
 const { getBrowser } = require('../browser');
 
 const { WaitList, Stack, Job, UserAgent } = require('../models');
@@ -17,6 +18,40 @@ const temporaryWaitList = [];
 /* eslint no-console: ["error", { allow: ["log"] }] */
 
 exports.applyTo = async (item) => (await item.origin) === 'PE';
+
+async function deleteUnavailable() {
+  try {
+    const jobsUnavailableList = await Job.findAll({
+      where: {
+        name: {
+          [Op.substring]: 'plus en ligne',
+        },
+      },
+    });
+    if (jobsUnavailableList) {
+      if (jobsUnavailableList.length < 2) {
+        const deleteJob = await Job.destroy({
+          where: { id: jobsUnavailableList[0].id },
+        });
+        if (deleteJob) {
+          return '✅ The job unavailable have been deleted successfully';
+        }
+        return '❌ An error has occurred while deleting the unavailable job';
+      }
+      jobsUnavailableList.forEach(async (job) => {
+        const deleteJob = await Job.destroy({ where: { id: job.id } });
+        if (deleteJob) {
+          return '✅ All Jobs unavailable have been deleted successfully';
+        }
+        return '❌ An error has occurred while deleting the unavailable jobs';
+      });
+      return false;
+    }
+    return true;
+  } catch (error) {
+    return '❌ Impossible to get Jobs';
+  }
+}
 
 function moreBtn(page) {
   // eslint-disable-next-line no-async-promise-executor
@@ -38,6 +73,7 @@ function moreBtn(page) {
 
 async function crawlResults(browser, URL) {
   console.log('🚀 - Launching PE Parsing');
+  deleteUnavailable();
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
   const userAgent = await UserAgent.findOne({ where: { id: 1 } });
@@ -91,10 +127,11 @@ async function crawlResults(browser, URL) {
 }
 
 async function findStacks(HTML) {
+  console.log('⚙️ - Stack launch');
   const stacks = await Stack.findAll({ where: { visibility: true } });
   const presentStacks = [];
   stacks.forEach(async (stack) => {
-    const regex = new RegExp(stack.regex, 'gm');
+    const regex = new RegExp(stack.regex, 'gmi');
     const search = regex.test(HTML);
     if (search) {
       presentStacks.push(stack);

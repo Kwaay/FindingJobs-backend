@@ -7,14 +7,15 @@ const { WaitList, Stack, Job, UserAgent } = require('../models');
 const regexContract =
   /((Temps?[ .-]?Partiel?|Autres|BEP|CAP|CDI|CDD|Freelance|Alternance|Stage)[ .-/]?([ .-/]?[ .-/]?(?:Temporaire)?[ .-]?)(\((.*)\))?)/gim;
 const regexStart =
-  /(Début[ .-]?[:]?\s{2,}?[0-9]?[0-9]?[ .-]?[JFMASOND]?[aévuoce]?[vriûptcn]?[vrsinltoet]?[ilmbe]?[emrb]?[rtbe]?[er]?[e]?[[ .-]?[0-9]?[0-9]?[0-9]?[0-9]?)[ .-]?()/gim;
+  /(Début[ .-]?:[ .-]?(\d{0,2})[ .-]?(?:[a-zéû]+)[ .-]?(\d{2,4}))/gim;
 const regexStudy =
-  /(CAP|BEP|[<>]?[ .-]?Bac[ .-][+][0-9][ .-]?[ .-/][ .-]?Master|Sans[ .-]?Diplôme|[<>]?[ .-]?Bac[ .-]?[+]?[ .-]?[0-9]?[ .-]?[ .-/]?[ .-]?(?:Doctorat)?)/gim;
+  / (CAP|Non spécifié|BEP|[<>]?[ .-]?Bac[ .-][+][0-9][ .-]?[ .-/][ .-]?Master|Sans[ .-]?Diplôme|[<>]?[ .-]?Bac[ .-]?[+]?[ .-]?[0-9]?[ .-]?[ .-/]?[ .-]?(?:Doctorat)?)/gim;
 const regexExperience =
   /([><][ .-]?[0-9]?[ .-]?[0-9]?[ .-]?an[s]?|[><][ .-]?[0-9]?[ .-]?[0-9]?[ .-]?mois)/gim;
 const regexRemote =
   /(Télétravail[ .-]?ponctuel[ .-]?autorisé|Télétravail[ .-]?partiel[ .-]? possible|Télétravail[ .-]?total[ .-]?possible)/gim;
 const regexSalary = /([\d]+(K)? €(?: et )?([\d]+K €)?)/gm;
+const regexClear = /(Expérience[ .-]:|Éducation[ .-]:|Salaire[ .-]entre)/gm;
 // eslint-enable operator-linebreak */
 
 const temporaryWaitList = [];
@@ -42,14 +43,13 @@ async function autoScroll(page) {
   });
 }
 
-async function crawlResults(browser, URL, paging, iterations = 1) {
+async function crawlResults(browser, URL, page, iterations = 1) {
   if (iterations === 1) {
     console.log('⏱️ - Launching Parse Welcome to the Jungle Results');
   }
-  console.log(paging);
   // eslint-disable-next-line no-async-promise-executor, consistent-return
   return new Promise(async (resolve) => {
-    console.log(`⚠️ - Fetching results from page #${iterations}`);
+    console.log(`🚧 - Fetching results from page #${iterations}`);
     const userAgent = await UserAgent.findOne({ where: { id: 1 } });
     if (!userAgent) {
       // eslint-disable-next-line no-promise-executor-return
@@ -57,8 +57,8 @@ async function crawlResults(browser, URL, paging, iterations = 1) {
     }
 
     const userAgentSource = JSON.stringify(userAgent.useragent);
-    await paging.setUserAgent(userAgentSource);
-    await paging.goto(URL, {
+    await page.setUserAgent(userAgentSource);
+    await page.goto(URL, {
       timeout: 0,
     });
     console.log('⏱️ - Waiting for Network idle');
@@ -67,9 +67,9 @@ async function crawlResults(browser, URL, paging, iterations = 1) {
     });
     console.log('✅ - Network idling');
     console.log('⏱️ - Waiting for scroll');
-    await autoScroll(paging);
+    await autoScroll(page);
     console.log('✅ - Page scroll complete');
-    const links = await paging.evaluate(() => {
+    const links = await page.evaluate(() => {
       const elements = Array.from(
         document.querySelectorAll('li > article > div > a'),
       );
@@ -97,13 +97,29 @@ async function crawlResults(browser, URL, paging, iterations = 1) {
       });
       temporaryWaitList.push(nLink);
     });
-    const hasNextPage = await paging.evaluate(async () => {
-      const nextBtn = document.querySelector("a[aria-label='Next page'] ");
-      return nextBtn.href;
+    const hasNextPage = await page.evaluate(async () => {
+      const activePage = document.querySelector(
+        'nav[aria-label="Pagination"] ul li a[aria-current="true"]',
+      );
+      const listPage = activePage.parentElement;
+      const nextPage = listPage.nextElementSibling;
+      console.log(activePage, listPage, nextPage);
+      if (nextPage.innerText !== '') {
+        const nextBtnSVG = document.querySelector(
+          'nav[aria-label="Pagination"] svg[alt="Right"]',
+        );
+        const nextBtn = nextBtnSVG.parentElement;
+        nextBtn.click();
+        await new Promise((resolve3) => {
+          setTimeout(resolve3, 500);
+        });
+        return window.location.href;
+      }
+      return false;
     });
     if (hasNextPage) {
-      console.log('⚠️ - Next page detected');
-      await crawlResults(browser, `${hasNextPage}`, paging, iterations + 1);
+      console.log('🚧 - Next page detected');
+      await crawlResults(browser, `${hasNextPage}`, page, iterations + 1);
     } else {
       console.log('🎉 - No more pages');
       setTimeout(() => {
@@ -144,15 +160,16 @@ const getHTML = (browser, URL) =>
     });
     const region = await page.evaluate(() => {
       const regionElement = document.querySelector(
-        'main div div div div ul.sc-1lvyirq-4.hengos',
+        ' ul[data-testid="job-header-metas"]',
       );
       if (regionElement) {
         return regionElement.innerText.replace(/\s/g, ' ');
       }
       return 'Non-indiqué';
     });
-    const contract = (region.match(regexContract) || ['Non-indiqué'])[0];
-    const splitContract = region.split(contract).join('');
+    const clear = region.replaceAll(regexClear, '');
+    const contract = (clear.match(regexContract) || ['Non-indiqué'])[0];
+    const splitContract = clear.split(contract).join('');
     const start = (splitContract.match(regexStart) || ['Non-indiqué'])[0];
     const splitStart = splitContract.split(start).join('');
     const study = (splitStart.match(regexStudy) || ['Non-indiqué'])[0];
@@ -162,7 +179,6 @@ const getHTML = (browser, URL) =>
     const remote = (splitExp.match(regexRemote) || ['Non-indiqué'])[0];
     const splitRemote = splitExp.split(remote).join('');
     const salary = (splitRemote.match(regexSalary) || ['Non-indiqué'])[0];
-    console.log(salary);
     const splitSalary = splitRemote.split(salary).join('');
     const location = splitSalary.trim() || 'Non-indiqué';
     const content = await page.evaluate(async () => {

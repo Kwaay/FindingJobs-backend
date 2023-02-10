@@ -1,6 +1,7 @@
 /* eslint-disable no-promise-executor-return */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
+const { Op } = require('sequelize');
 const { WaitList } = require('../models');
 const { getBrowser } = require('../browser');
 
@@ -37,8 +38,8 @@ async function processLinks(browser, iterations = 1) {
   return new Promise(async (resolve) => {
     console.log(`⚠️ - Processing links #${iterations}`);
     const waitList = await WaitList.findAll({
-      limit: 10,
-      where: { origin: 'WTTJ' },
+      limit: 15,
+      where: { origin: { [Op.or]: ['WTTJ', 'PE'] } },
     });
     if (!waitList) {
       console.log(`🎉 - WaitList successfully proceded`);
@@ -47,7 +48,6 @@ async function processLinks(browser, iterations = 1) {
     const promises = [];
     for (const item of waitList) {
       for (const ctrl of controllers) {
-        console.log(await ctrl.applyTo(item), item);
         if (await ctrl.applyTo(item)) {
           await promises.push(ctrl.getHTML(browser, item.url));
           await WaitList.destroy({ where: { id: item.id } });
