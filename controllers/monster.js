@@ -77,7 +77,7 @@ async function moreBtn(page, iterations) {
 }
 
 async function crawlResults(browser, URL) {
-  Logger.start('Launching Monster Parsing');
+  Logger.launch('Launching Monster Parsing');
   // eslint-disable-next-line no-async-promise-executor
   // eslint-disable-next-line prefer-const
   let iterations = 1;

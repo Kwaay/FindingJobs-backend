@@ -26,6 +26,8 @@ const stack = require('./Stack')(sequelize, Sequelize.DataTypes);
 const job = require('./Job')(sequelize, Sequelize.DataTypes);
 const userAgent = require('./UserAgent')(sequelize, Sequelize.DataTypes);
 
+const content = require('./content')(sequelize, Sequelize.DataTypes);
+
 stack.belongsToMany(job, { through: 'JobHasStack' });
 job.belongsToMany(stack, { through: 'JobHasStack' });
 
@@ -34,6 +36,7 @@ sequelize.WaitList = waitList;
 sequelize.Stack = stack;
 sequelize.Job = job;
 sequelize.UserAgent = userAgent;
+sequelize.Content = content;
 
 // Tentative d'authentification à la base de données
 sequelize

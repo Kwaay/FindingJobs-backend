@@ -38,7 +38,7 @@ async function processLinks(browser, iterations = 1) {
     Logger.info(`Processing links #${iterations}`);
     const waitList = await WaitList.findAll({
       limit: 15,
-      where: { origin: { [Op.or]: ['WTTJ', 'PE'] } },
+      where: { origin: 'Hellowork' }, // { [Op.or]: ['WTTJ', 'PE'] }
     });
     if (!waitList) {
       Logger.end(`WaitList successfully proceded`);
