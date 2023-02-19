@@ -1,18 +1,16 @@
+/* eslint-disable no-irregular-whitespace */
 /* eslint-disable operator-linebreak */
-const striptags = require('striptags');
 const { getBrowser } = require('../browser');
 const Logger = require('../lib/Logger');
 
-const { WaitList, Stack, Job, UserAgent, Content } = require('../models');
+const { WaitList, Stack, Job, UserAgent } = require('../models');
 
 const regexContract =
-  /((?:Contrat [à])|(?:Mission intérimaire))(?:[- ]+)(|(?:durée (?:in)?déterminée)?)+((?: - )?(?:\d)+ ?(?:Jour(\(s\))|mois|an[s]?))?/gim;
-const regexStudy =
-  /(?:Bac[ ]?\+\d(?:[,]? )?)+(?:(?:et|ou)(?: plus ou)? équivalents(?: [a-z]+)?)?/gim;
-const regexType = /(?:[0-9][0-9]H[0-9]?[0-9]? (Horaires normaux))/gim;
+  /((?<contrat>Intérim|CDD|CDI|Stage|Alternance|Indépendant \/Freelance)(?:(?: - )?(?<duree>[\d]{1,3} (?<unite>jour(?:s)?|mois|an(?:s)?|semaine(?:s)?))?(?<tt>Télétravail (?:occasionnel|partiel|complet))?(?<temps>Temps (?:partiel|complet))?)+)/gm;
+const regexLocation = /((?:^[0-9a-zA-ZÀ-úœ\\' -]*) - (?:[\d]{2,3}))/gm;
+const regexStudy = /(BEP|CAP|Bac(?: \+[\d])?)/gm;
 const regexSalary =
-  /((?:Primes)|(?:((?:a|à) n(?:é|e)gocier))|(?:Selon ((?:le |l'|votre )?(?:exp(?:e|é)rience(?:s)?|profil|(?:â|a)ge| formation | niveau d'(?:e|é)tudes|dipl(?:o|ô)me|comp(?:é|e)tence(s)?)(?: ou| et| \+|\/)?(?: exp(?:e|é)rience| profil| (?:a|â)ge| formation| niveau d'(?:e|é)tudes| dipl(?:o|ô)me|comp(?:é|e)tence(?:s)?)?))|(?:[\d,]+ (?:€|Euros)(?: à [\d,]+ (?:€|Euros))?))/gim;
-// eslint-enable operator-linebreak */
+  /((?<nombre>(?:(?: - )?(?:[0-9  ,])*)+) EUR par (?<duree>an|mois|jour|heure))/gm;
 
 const temporaryWaitList = [];
 /* eslint no-console: ["error", { allow: ["log"] }] */
@@ -104,18 +102,19 @@ async function crawlResults(browser, URL, page, iterations = 1) {
   });
 }
 
-// async function findStacks(HTML) {
-//   const stacks = await Stack.findAll({ where: { visibility: true } });
-//   const presentStacks = [];
-//   stacks.forEach(async (stack) => {
-//     const regex = new RegExp(stack.regex, 'gmi');
-//     const search = regex.test(HTML);
-//     if (search) {
-//       presentStacks.push(stack);
-//     }
-//   });
-//   return presentStacks;
-// }
+async function findStacks(HTML) {
+  const stacks = await Stack.findAll({ where: { visibility: true } });
+  const presentStacks = [];
+  stacks.forEach(async (stack) => {
+    const regex = new RegExp(`(${stack.regex})`, 'gmi');
+    const search = regex.test(HTML);
+    if (search) {
+      presentStacks.push(stack);
+    }
+  });
+  return presentStacks;
+}
+
 const getHTML = (browser, URL, res) =>
   // eslint-disable-next-line no-async-promise-executor , implicit-arrow-linebreak
   new Promise(async (resolve) => {
@@ -129,7 +128,7 @@ const getHTML = (browser, URL, res) =>
     const userAgentSource = JSON.stringify(userAgent.useragent);
     await page.setUserAgent(userAgentSource);
     await page.goto(URL, { waitUntil: 'networkidle2', timeout: 0 });
-    const content = await page.evaluate(() => {
+    const tags = await page.evaluate(() => {
       const element = Array.from(
         document.querySelectorAll(
           'ul[class="tag-offer-list"] li:not([class="break"])',
@@ -141,81 +140,73 @@ const getHTML = (browser, URL, res) =>
 
       return 'Vide';
     });
-    content.forEach(async (element) => {
-      await Content.findOrCreate({
-        where: { content: element },
-        defaults: {
-          link: URL,
-          content: element,
-          origin: 'Hellowork',
-        },
-      });
+    const content = await page.evaluate(() => {
+      const unavailable = document.querySelector('.warning');
+      if (unavailable) return null;
+
+      const element = document.querySelector('.tw-typo-long-m');
+      if (element) {
+        const replacedElement = element.innerText.replaceAll(/\s/g, ' ');
+        return replacedElement.replaceAll(/\n/g, ' ');
+      }
+      return false;
     });
-    // const name = await page.evaluate(() => {
-    //   const nameElement = document.querySelector('h1 span');
-    //   if (nameElement) {
-    //     return nameElement.innerText;
-    //   }
-    //   return 'Non-indiqué';
-    // });
-    // const region = await page.evaluate(() => {
-    //   const regionElement = document.querySelector(
-    //     'section.sm\\:tw-layout-wrapper.campagne.centered.classic.modal ul li span',
-    //   );
-    //   if (regionElement) {
-    //     return regionElement.innerText.replace(/\s/g, ' ');
-    //   }
-    //   return 'Non-indiqué';
-    // });
-    // const exp = await page.evaluate(() => {
-    //   const expElement = document.querySelector(
-    //     '#contents > div > div > div > div > div > div > div > div > div > ul > li > span > span.skill-name',
-    //   );
-    //   if (expElement) {
-    //     return expElement.innerText.replace(/\s/g, ' ');
-    //   }
-    //   return 'Non-indiqué';
-    // });
-    // const content = await page.evaluate(async () => {
-    //   const paragraph = document.querySelector(
-    //     'main div.modal-content div div',
-    //   );
-    //   if (paragraph) {
-    //     return paragraph.innerText.replace(/\s/g, ' ');
-    //   }
-    //   return 'Non-indiqué';
-    // });
-    // const contract = (content.match(regexContract) || ['Non-indiqué'])[0];
-    // const splitContract = content.split(contract).join('');
-    // const study = (splitContract.match(regexStudy) || ['Non-indiqué'])[0];
-    // const splitStudy = splitContract.split(study).join('');
-    // const type = (splitStudy.match(regexType) || ['Non-indiqué'])[0];
-    // const splitType = splitStudy.split(type).join('');
-    // const salary = (splitType.match(regexSalary) || ['Non-indiqué'])[0];
-    // const splitSalary = splitType.split(salary).join('');
-    // const sContent = striptags(splitSalary).toLowerCase();
+    // eslint-disable-next-line no-promise-executor-return
+    if (content === null) return resolve();
+    const name = await page.evaluate(() => {
+      const nameElement = document.querySelector('h1 span');
+      if (nameElement) {
+        return nameElement.innerText;
+      }
+      return 'Non-indiqué';
+    });
+    const jobTags = {
+      location: 'Non-indiqué',
+      salary: 'Non-indiqué',
+      study: 'Non-indiqué',
+      contract: 'Non-indiqué',
+    };
+    tags.forEach(async (tag) => {
+      const contract = tag.match(regexContract);
+      if (contract) {
+        [jobTags.contract] = contract;
+        return;
+      }
+      const study = tag.match(regexStudy);
+      if (study) {
+        [jobTags.study] = study;
+        return;
+      }
+      const salary = tag.match(regexSalary);
+      if (salary) {
+        [jobTags.salary] = salary;
+        return;
+      }
+      const location = tag.match(regexLocation);
+      if (location) {
+        [jobTags.location] = location;
+      }
+    });
+
     await page.close();
     Logger.success('Page data fetched');
 
-    // const presentStacks = await findStacks(sContent);
-    // const jobCreate = await Job.create({
-    //   name,
-    //   location: region,
-    //   link: URL,
-    //   contract,
-    //   salary,
-    //   remote: 'Non-indiqué',
-    //   exp,
-    //   study,
-    //   start: 'Non-indiqué',
-    //   type,
-    //   origin: 'Hellowork',
-    // });
-    // const stacksRelations = [];
-    // presentStacks.forEach((stack) => {
-    //   stacksRelations.push(jobCreate.addStack(stack));
-    // });
-    // await Promise.all(stacksRelations);
+    const presentStacks = await findStacks(content);
+    const jobCreate = await Job.create({
+      ...jobTags,
+      name,
+      link: URL,
+      remote: 'Non-indiqué',
+      exp: 'Non-indiqué',
+      start: 'Non-indiqué',
+      type: 'Non-indiqué',
+      origin: 'Hellowork',
+    });
+    const stacksRelations = [];
+    presentStacks.forEach((stack) => {
+      stacksRelations.push(jobCreate.addStack(stack));
+    });
+    await Promise.all(stacksRelations);
 
     resolve();
     // eslint-disable-next-line no-promise-executor-return
