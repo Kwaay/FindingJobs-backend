@@ -37,7 +37,7 @@ async function processLinks(browser, iterations = 1) {
   return new Promise(async (resolve) => {
     Logger.info(`Processing links #${iterations}`);
     const waitList = await WaitList.findAll({
-      limit: 15,
+      limit: 10,
       where: { origin: 'Hellowork' }, // { [Op.or]: ['WTTJ', 'PE'] }
     });
     if (!waitList) {
@@ -48,7 +48,7 @@ async function processLinks(browser, iterations = 1) {
     for (const item of waitList) {
       for (const ctrl of controllers) {
         if (await ctrl.applyTo(item)) {
-          await promises.push(ctrl.getHTML(browser, item.url));
+          promises.push(ctrl.getHTML(browser, item.url));
           await WaitList.destroy({ where: { id: item.id } });
         }
       }

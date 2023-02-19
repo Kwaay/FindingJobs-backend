@@ -144,7 +144,7 @@ async function findStacks(HTML) {
   const stacks = await Stack.findAll({ where: { visibility: true } });
   const presentStacks = [];
   stacks.forEach(async (stack) => {
-    const regex = new RegExp(stack.regex, 'gmi');
+    const regex = new RegExp(`(${stack.regex})`, 'gmi');
     const search = regex.test(HTML);
     if (search) {
       presentStacks.push(stack);
