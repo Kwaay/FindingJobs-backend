@@ -6,9 +6,9 @@ const helloworkCtrl = require('../controllers/hellowork');
 const processWaitListCtrl = require('../controllers/waitlist');
 const auth = require('../middleware/auth');
 
-// processWaitListCtrl.addController(PECtrl);
-// processWaitListCtrl.addController(WTTJCtrl);
-// processWaitListCtrl.addController(monsterCtrl);
+processWaitListCtrl.addController(PECtrl);
+processWaitListCtrl.addController(WTTJCtrl);
+processWaitListCtrl.addController(monsterCtrl);
 processWaitListCtrl.addController(helloworkCtrl);
 
 const router = express.Router();

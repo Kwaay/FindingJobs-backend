@@ -115,103 +115,105 @@ async function findStacks(HTML) {
   return presentStacks;
 }
 
-const getHTML = (browser, URL, res) =>
+const getHTML = async (browser, URL, res) => {
   // eslint-disable-next-line no-async-promise-executor , implicit-arrow-linebreak
-  new Promise(async (resolve) => {
-    const page = await browser.newPage();
-    Logger.wait('Fetching page data');
-    const userAgent = await UserAgent.findOne({ where: { id: 1 } });
-    if (!userAgent) {
-      // eslint-disable-next-line no-promise-executor-return
-      return res.status(404).json({ message: 'UserAgent not found' });
+  const page = await browser.newPage();
+  Logger.wait('Fetching page data');
+  const userAgent = await UserAgent.findOne({ where: { id: 1 } });
+  if (!userAgent) {
+    // eslint-disable-next-line no-promise-executor-return
+    return res.status(404).json({ message: 'UserAgent not found' });
+  }
+  const userAgentSource = JSON.stringify(userAgent.useragent);
+  await page.setUserAgent(userAgentSource);
+  await page.goto(URL, { waitUntil: 'networkidle2', timeout: 0 });
+  const tags = await page.evaluate(() => {
+    const element = Array.from(
+      document.querySelectorAll(
+        'ul[class="tag-offer-list"] li:not([class="break"])',
+      ),
+    ).map((elem) => elem.innerText);
+    if (element) {
+      return element;
     }
-    const userAgentSource = JSON.stringify(userAgent.useragent);
-    await page.setUserAgent(userAgentSource);
-    await page.goto(URL, { waitUntil: 'networkidle2', timeout: 0 });
-    const tags = await page.evaluate(() => {
-      const element = Array.from(
-        document.querySelectorAll(
-          'ul[class="tag-offer-list"] li:not([class="break"])',
-        ),
-      ).map((elem) => elem.innerText);
-      if (element) {
-        return element;
-      }
 
-      return 'Vide';
-    });
-    const content = await page.evaluate(() => {
-      const unavailable = document.querySelector('.warning');
-      if (unavailable) return null;
-
-      const element = document.querySelector('.tw-typo-long-m');
-      if (element) {
-        const replacedElement = element.innerText.replaceAll(/\s/g, ' ');
-        return replacedElement.replaceAll(/\n/g, ' ');
-      }
-      return false;
-    });
-    // eslint-disable-next-line no-promise-executor-return
-    if (content === null) return resolve();
-    const name = await page.evaluate(() => {
-      const nameElement = document.querySelector('h1 span');
-      if (nameElement) {
-        return nameElement.innerText;
-      }
-      return 'Non-indiqué';
-    });
-    const jobTags = {
-      location: 'Non-indiqué',
-      salary: 'Non-indiqué',
-      study: 'Non-indiqué',
-      contract: 'Non-indiqué',
-    };
-    tags.forEach(async (tag) => {
-      const contract = tag.match(regexContract);
-      if (contract) {
-        [jobTags.contract] = contract;
-        return;
-      }
-      const study = tag.match(regexStudy);
-      if (study) {
-        [jobTags.study] = study;
-        return;
-      }
-      const salary = tag.match(regexSalary);
-      if (salary) {
-        [jobTags.salary] = salary;
-        return;
-      }
-      const location = tag.match(regexLocation);
-      if (location) {
-        [jobTags.location] = location;
-      }
-    });
-
-    await page.close();
-    Logger.success('Page data fetched');
-
-    const presentStacks = await findStacks(content);
-    const jobCreate = await Job.create({
-      ...jobTags,
-      name,
-      link: URL,
-      remote: 'Non-indiqué',
-      exp: 'Non-indiqué',
-      start: 'Non-indiqué',
-      type: 'Non-indiqué',
-      origin: 'Hellowork',
-    });
-    const stacksRelations = [];
-    presentStacks.forEach((stack) => {
-      stacksRelations.push(jobCreate.addStack(stack));
-    });
-    await Promise.all(stacksRelations);
-
-    resolve();
-    // eslint-disable-next-line no-promise-executor-return
-    return true;
+    return 'Vide';
   });
+  const content = await page.evaluate(() => {
+    const unavailable = document.querySelector('.warning');
+    if (unavailable) return null;
+
+    const element = document.querySelector('.tw-typo-long-m');
+    if (element) {
+      const replacedElement = element.innerText.replaceAll(/\s/g, ' ');
+      return replacedElement.replaceAll(/\n/g, ' ');
+    }
+    return false;
+  });
+  // eslint-disable-next-line no-promise-executor-return
+  if (content === null) {
+    await page.close();
+    return Promise.resolve();
+  }
+  const name = await page.evaluate(() => {
+    const nameElement = document.querySelector('h1 span');
+    if (nameElement) {
+      return nameElement.innerText;
+    }
+    return 'Non-indiqué';
+  });
+  const jobTags = {
+    location: 'Non-indiqué',
+    salary: 'Non-indiqué',
+    study: 'Non-indiqué',
+    contract: 'Non-indiqué',
+  };
+  tags.forEach(async (tag) => {
+    const contract = tag.match(regexContract);
+    if (contract) {
+      [jobTags.contract] = contract;
+      return;
+    }
+    const study = tag.match(regexStudy);
+    if (study) {
+      [jobTags.study] = study;
+      return;
+    }
+    const salary = tag.match(regexSalary);
+    if (salary) {
+      [jobTags.salary] = salary;
+      return;
+    }
+    const location = tag.match(regexLocation);
+    if (location) {
+      [jobTags.location] = location;
+    }
+  });
+
+  await page.close();
+  Logger.success('Page data fetched');
+
+  const presentStacks = await findStacks(content);
+  const jobCreate = await Job.create({
+    ...jobTags,
+    name,
+    link: URL,
+    remote: 'Non-indiqué',
+    exp: 'Non-indiqué',
+    start: 'Non-indiqué',
+    type: 'Non-indiqué',
+    origin: 'Hellowork',
+  });
+  const stacksRelations = [];
+  presentStacks.forEach((stack) => {
+    stacksRelations.push(jobCreate.addStack(stack));
+  });
+  await Promise.all(stacksRelations);
+
+  Promise.resolve();
+  // eslint-disable-next-line no-promise-executor-return
+  return true;
+};
 exports.getHTML = getHTML;
 
 function millisToMinutesAndSeconds(millis) {
@@ -224,25 +226,23 @@ function millisToMinutesAndSeconds(millis) {
 
 const getData = async (browser, iterations = 1) => {
   // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve) => {
-    const findAllLinks = await WaitList.findAll({
-      limit: 15,
-      where: {
-        origin: 'Hellowork',
-      },
-    });
-    const promises = [];
-    findAllLinks.forEach(async (link) => {
-      await promises.push(getHTML(browser, link.url));
-      await WaitList.destroy({ where: { id: link.id } });
-    });
-    await Promise.all(promises);
-    if (findAllLinks.length > 1) {
-      await getData(browser, iterations + 1);
-    }
-    resolve();
-    Logger.end('No more links');
+  const findAllLinks = await WaitList.findAll({
+    limit: 15,
+    where: {
+      origin: 'Hellowork',
+    },
   });
+  const promises = [];
+  findAllLinks.forEach(async (link) => {
+    await promises.push(getHTML(browser, link.url));
+    await WaitList.destroy({ where: { id: link.id } });
+  });
+  await Promise.all(promises);
+  if (findAllLinks.length > 1) {
+    await getData(browser, iterations + 1);
+  }
+  Promise.resolve();
+  Logger.end('No more links');
 };
 exports.getData = getData;
 

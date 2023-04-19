@@ -46,7 +46,7 @@ async function autoScroll(page) {
 
 async function crawlResults(browser, URL, page, iterations = 1) {
   if (iterations === 1) {
-    Logger.start('Launching Parse Welcome to the Jungle Results');
+    Logger.launch('Launching Parse Welcome to the Jungle Results');
   }
   // eslint-disable-next-line no-async-promise-executor, consistent-return
   return new Promise(async (resolve) => {

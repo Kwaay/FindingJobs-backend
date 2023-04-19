@@ -34,31 +34,29 @@ exports.crawl = async (req, res) => {
 
 async function processLinks(browser, iterations = 1) {
   // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve) => {
-    Logger.info(`Processing links #${iterations}`);
-    const waitList = await WaitList.findAll({
-      limit: 10,
-      where: { origin: 'Hellowork' }, // { [Op.or]: ['WTTJ', 'PE'] }
-    });
-    if (!waitList) {
-      Logger.end(`WaitList successfully proceded`);
-      return resolve();
-    }
-    const promises = [];
-    for (const item of waitList) {
-      for (const ctrl of controllers) {
-        if (await ctrl.applyTo(item)) {
-          promises.push(ctrl.getHTML(browser, item.url));
-          await WaitList.destroy({ where: { id: item.id } });
-        }
+  Logger.info(`Processing links #${iterations}`);
+  const waitList = await WaitList.findAll({
+    limit: 10,
+    where: { origin: { [Op.or]: ['WTTJ', 'PE', 'Hellowork', 'Monster'] } },
+  });
+  if (!waitList) {
+    Logger.end(`WaitList successfully proceded`);
+    return Promise.resolve();
+  }
+  const promises = [];
+  for (const item of waitList) {
+    for (const ctrl of controllers) {
+      if (await ctrl.applyTo(item)) {
+        promises.push(ctrl.getHTML(browser, item.url));
+        await WaitList.destroy({ where: { id: item.id } });
       }
     }
-    await Promise.all(promises);
-    if (waitList.length > 1) {
-      await processLinks(browser, iterations + 1);
-    }
-    return resolve();
-  });
+  }
+  await Promise.all(promises);
+  if (waitList.length > 1) {
+    await processLinks(browser, iterations + 1);
+  }
+  return Promise.resolve();
 }
 
 exports.selectControllers = async (req, res) => {

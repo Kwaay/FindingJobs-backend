@@ -73,7 +73,7 @@ function moreBtn(page) {
 }
 
 async function crawlResults(browser, URL) {
-  Logger.start('Launching PE Parsing');
+  Logger.launch('Launching PE Parsing');
   deleteUnavailable();
   // eslint-disable-next-line no-async-promise-executor
   const page = await browser.newPage();
@@ -120,7 +120,7 @@ async function crawlResults(browser, URL) {
     temporaryWaitList.push(link);
   });
   setTimeout(() => {
-    Logger.end(`Launching Parse PE with ${temporaryWaitList.length} results`);
+    Logger.end(`Finished Parse PE with ${temporaryWaitList.length} results`);
   }, 5000);
   return true;
 }
